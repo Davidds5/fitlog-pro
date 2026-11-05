@@ -38,10 +38,25 @@ export function GuiaTab() {
   // Modal para criar novo treino caso o usuário clique em "+ Criar novo treino"
   const [isCreateWorkoutModalOpen, setIsCreateWorkoutModalOpen] = useState<boolean>(false);
 
-  const muscleGroups = ['Todos', 'Peito', 'Costas', 'Pernas', 'Ombros', 'Bíceps', 'Tríceps', 'Abdômen'];
+  const muscleGroups = ['Todos', 'Peito', 'Costas', 'Ombros', 'Bíceps', 'Tríceps', 'Pernas', 'Abdômen'];
 
-  // Unifica exercícios nativos e personalizados
-  const allExercises = [...customExercises, ...defaultExercicios];
+  const MUSCLE_ORDER: Record<string, number> = {
+    Peito: 1,
+    Costas: 2,
+    Ombros: 3,
+    Bíceps: 4,
+    Tríceps: 5,
+    Pernas: 6,
+    Abdômen: 7,
+  };
+
+  // Unifica exercícios nativos e personalizados ordenados de forma anatômica
+  const allExercises = [...customExercises, ...defaultExercicios].sort((a, b) => {
+    const orderA = MUSCLE_ORDER[a.muscleGroup] || 99;
+    const orderB = MUSCLE_ORDER[b.muscleGroup] || 99;
+    if (orderA !== orderB) return orderA - orderB;
+    return a.name.localeCompare(b.name);
+  });
 
   const filteredExercises = allExercises.filter((ex) => {
     const matchesMuscle = selectedMuscle === 'Todos' || ex.muscleGroup === selectedMuscle;
@@ -134,15 +149,15 @@ export function GuiaTab() {
         </div>
 
         {/* Chips de Músculos com Rolagem Suave sem Barra Visível */}
-        <div className="relative mt-3">
-          <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar scroll-smooth">
+        <div className="relative mt-3 -mx-1 px-1">
+          <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar scroll-smooth pr-6">
             {muscleGroups.map((group) => {
               const isSelected = selectedMuscle === group;
               return (
                 <button
                   key={group}
                   onClick={() => setSelectedMuscle(group)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all border shrink-0 min-h-[34px] ${
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all border shrink-0 min-h-[34px] ${
                     isSelected
                       ? 'bg-[var(--brand-primary)] text-white border-[var(--brand-primary)] shadow-xs'
                       : 'bg-[var(--surface-subtle)] text-[var(--text-muted)] border-[var(--border)] hover:border-[var(--brand-primary)]'
