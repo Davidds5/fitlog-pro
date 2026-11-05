@@ -410,7 +410,7 @@ export function DietaTab() {
             </div>
 
             {/* Lista com Rolagem Suave */}
-            <div className="flex-1 overflow-y-auto max-h-52 sm:max-h-60 space-y-1.5 mb-3 pr-1 divide-y divide-transparent">
+            <div className="flex-1 overflow-y-auto max-h-52 sm:max-h-60 space-y-1.5 mb-3 pr-1 divide-y divide-transparent custom-scrollbar">
               {searchResults.length > 0 ? (
                 searchResults.map((food) => {
                   const isSelected = selectedFood.id === food.id;

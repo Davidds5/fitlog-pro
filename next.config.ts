@@ -6,7 +6,7 @@ const cspHeader = `
   style-src 'self' 'unsafe-inline';
   font-src 'self' data:;
   img-src 'self' data: blob:;
-  connect-src 'self' ws: wss: http: https:;
+  connect-src 'self';
   object-src 'none';
   base-uri 'self';
   form-action 'self';
@@ -17,9 +17,10 @@ const cspHeader = `
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  poweredByHeader: false,
   devIndicators: false,
   async headers() {
-    // Em desenvolvimento, não aplicamos headers que quebrem o HMR do Turbopack
+    // Em desenvolvimento, não aplicamos headers que quebrem o HMR do Webpack
     if (process.env.NODE_ENV !== 'production') {
       return [];
     }
@@ -50,7 +51,7 @@ const nextConfig: NextConfig = {
           },
           {
             key: 'Strict-Transport-Security',
-            value: 'max-age=31536000; includeSubDomains; preload',
+            value: 'max-age=63072000; includeSubDomains; preload',
           },
         ],
       },

@@ -1,8 +1,10 @@
-const CACHE_NAME = 'fitlog-pro-v1';
+const CACHE_NAME = 'fitlog-pro-v1.1';
 const STATIC_ASSETS = [
   '/',
   '/manifest.webmanifest',
   '/icon.svg',
+  '/icon-192.png',
+  '/icon-512.png',
 ];
 
 self.addEventListener('install', (event) => {
@@ -26,8 +28,12 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Stale-while-revalidate para offline first
+  // Apenas GET e da mesma origem
   if (event.request.method !== 'GET') return;
+  if (!event.request.url.startsWith(self.location.origin)) return;
+  // Nunca cacheia rotas de API sensíveis
+  if (event.request.url.includes('/api/')) return;
+
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       const fetchPromise = fetch(event.request)

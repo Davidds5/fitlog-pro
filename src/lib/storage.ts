@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { validateStorageData } from '@/lib/schemas';
 
 /**
  * Hook reativo para LocalStorage seguro para Next.js (SSR friendly)
@@ -17,7 +18,9 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T 
       if (typeof window !== 'undefined') {
         const item = window.localStorage.getItem(key);
         if (item !== null) {
-          setStoredValue(JSON.parse(item));
+          const rawParsed = JSON.parse(item);
+          const sanitized = validateStorageData<T>(key, rawParsed, initialValueRef.current);
+          setStoredValue(sanitized);
         } else {
           window.localStorage.setItem(key, JSON.stringify(initialValueRef.current));
         }
@@ -62,7 +65,9 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T 
     const handleStorageEvent = (e: StorageEvent) => {
       if (e.key === key && e.newValue) {
         try {
-          setStoredValue(JSON.parse(e.newValue));
+          const rawParsed = JSON.parse(e.newValue);
+          const sanitized = validateStorageData<T>(key, rawParsed, initialValueRef.current);
+          setStoredValue(sanitized);
         } catch {
           // ignora
         }
