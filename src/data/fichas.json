@@ -1,0 +1,210 @@
+[
+  {
+    "id": "ficha-a",
+    "name": "Treino A: Peito, Tríceps & Ombro Frontal",
+    "letter": "A",
+    "description": "Foco em empurrar (Push) - Desenvolvimento superior e estabilidade",
+    "phase": "piramide",
+    "exercises": [
+      {
+        "id": "a-1",
+        "exerciseId": "ex-supino-inclinado-halteres",
+        "name": "Supino Inclinado com Halteres",
+        "muscleGroup": "Peito",
+        "series": [
+          { "id": "s-1", "serieNumber": 1, "weight": 16, "reps": 15, "completed": false },
+          { "id": "s-2", "serieNumber": 2, "weight": 20, "reps": 12, "completed": false },
+          { "id": "s-3", "serieNumber": 3, "weight": 24, "reps": 10, "completed": false },
+          { "id": "s-4", "serieNumber": 4, "weight": 28, "reps": 8, "completed": false }
+        ]
+      },
+      {
+        "id": "a-2",
+        "exerciseId": "ex-supino-reto-barra",
+        "name": "Supino Reto com Barra",
+        "muscleGroup": "Peito",
+        "series": [
+          { "id": "s-5", "serieNumber": 1, "weight": 40, "reps": 15, "completed": false },
+          { "id": "s-6", "serieNumber": 2, "weight": 50, "reps": 12, "completed": false },
+          { "id": "s-7", "serieNumber": 3, "weight": 60, "reps": 10, "completed": false },
+          { "id": "s-8", "serieNumber": 4, "weight": 70, "reps": 8, "completed": false }
+        ]
+      },
+      {
+        "id": "a-3",
+        "exerciseId": "ex-desenvolvimento-halteres",
+        "name": "Desenvolvimento com Halteres",
+        "muscleGroup": "Ombros",
+        "series": [
+          { "id": "s-9", "serieNumber": 1, "weight": 12, "reps": 15, "completed": false },
+          { "id": "s-10", "serieNumber": 2, "weight": 14, "reps": 12, "completed": false },
+          { "id": "s-11", "serieNumber": 3, "weight": 16, "reps": 10, "completed": false },
+          { "id": "s-12", "serieNumber": 4, "weight": 18, "reps": 8, "completed": false }
+        ]
+      },
+      {
+        "id": "a-4",
+        "exerciseId": "ex-elevacao-lateral",
+        "name": "Elevação Lateral com Halteres",
+        "muscleGroup": "Ombros",
+        "series": [
+          { "id": "s-13", "serieNumber": 1, "weight": 8, "reps": 15, "completed": false },
+          { "id": "s-14", "serieNumber": 2, "weight": 10, "reps": 12, "completed": false },
+          { "id": "s-15", "serieNumber": 3, "weight": 10, "reps": 10, "completed": false },
+          { "id": "s-16", "serieNumber": 4, "weight": 12, "reps": 8, "completed": false }
+        ]
+      },
+      {
+        "id": "a-5",
+        "exerciseId": "ex-triceps-corda",
+        "name": "Tríceps Corda na Polia Alta",
+        "muscleGroup": "Tríceps",
+        "series": [
+          { "id": "s-17", "serieNumber": 1, "weight": 25, "reps": 15, "completed": false },
+          { "id": "s-18", "serieNumber": 2, "weight": 30, "reps": 12, "completed": false },
+          { "id": "s-19", "serieNumber": 3, "weight": 35, "reps": 10, "completed": false },
+          { "id": "s-20", "serieNumber": 4, "weight": 40, "reps": 8, "completed": false }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "ficha-b",
+    "name": "Treino B: Costas, Bíceps & Ombro Posterior",
+    "letter": "B",
+    "description": "Foco em puxar (Pull) - Expansão dorsal e bíceps denso",
+    "phase": "piramide",
+    "exercises": [
+      {
+        "id": "b-1",
+        "exerciseId": "ex-puxada-alta-aberta",
+        "name": "Puxada Alta com Pegada Pronada Aberta",
+        "muscleGroup": "Costas",
+        "series": [
+          { "id": "s-21", "serieNumber": 1, "weight": 35, "reps": 15, "completed": false },
+          { "id": "s-22", "serieNumber": 2, "weight": 45, "reps": 12, "completed": false },
+          { "id": "s-23", "serieNumber": 3, "weight": 55, "reps": 10, "completed": false },
+          { "id": "s-24", "serieNumber": 4, "weight": 65, "reps": 8, "completed": false }
+        ]
+      },
+      {
+        "id": "b-2",
+        "exerciseId": "ex-remada-baixa-triangulo",
+        "name": "Remada Baixa com Triângulo",
+        "muscleGroup": "Costas",
+        "series": [
+          { "id": "s-25", "serieNumber": 1, "weight": 35, "reps": 15, "completed": false },
+          { "id": "s-26", "serieNumber": 2, "weight": 45, "reps": 12, "completed": false },
+          { "id": "s-27", "serieNumber": 3, "weight": 55, "reps": 10, "completed": false },
+          { "id": "s-28", "serieNumber": 4, "weight": 65, "reps": 8, "completed": false }
+        ]
+      },
+      {
+        "id": "b-3",
+        "exerciseId": "ex-crucifixo-invertido-cross",
+        "name": "Crucifixo Invertido na Polia / Halteres",
+        "muscleGroup": "Ombros",
+        "series": [
+          { "id": "s-29", "serieNumber": 1, "weight": 6, "reps": 15, "completed": false },
+          { "id": "s-30", "serieNumber": 2, "weight": 8, "reps": 12, "completed": false },
+          { "id": "s-31", "serieNumber": 3, "weight": 10, "reps": 10, "completed": false },
+          { "id": "s-32", "serieNumber": 4, "weight": 12, "reps": 8, "completed": false }
+        ]
+      },
+      {
+        "id": "b-4",
+        "exerciseId": "ex-rosca-direta-barra-w",
+        "name": "Rosca Direta com Barra W",
+        "muscleGroup": "Bíceps",
+        "series": [
+          { "id": "s-33", "serieNumber": 1, "weight": 14, "reps": 15, "completed": false },
+          { "id": "s-34", "serieNumber": 2, "weight": 18, "reps": 12, "completed": false },
+          { "id": "s-35", "serieNumber": 3, "weight": 22, "reps": 10, "completed": false },
+          { "id": "s-36", "serieNumber": 4, "weight": 26, "reps": 8, "completed": false }
+        ]
+      },
+      {
+        "id": "b-5",
+        "exerciseId": "ex-rosca-martelo",
+        "name": "Rosca Martelo com Halteres",
+        "muscleGroup": "Bíceps",
+        "series": [
+          { "id": "s-37", "serieNumber": 1, "weight": 10, "reps": 15, "completed": false },
+          { "id": "s-38", "serieNumber": 2, "weight": 12, "reps": 12, "completed": false },
+          { "id": "s-39", "serieNumber": 3, "weight": 14, "reps": 10, "completed": false },
+          { "id": "s-40", "serieNumber": 4, "weight": 16, "reps": 8, "completed": false }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "ficha-c",
+    "name": "Treino C: Pernas Completas & Abdômen",
+    "letter": "C",
+    "description": "Foco em membros inferiores (Legs) e estabilidade de tronco",
+    "phase": "piramide",
+    "exercises": [
+      {
+        "id": "c-1",
+        "exerciseId": "ex-agachamento-livre",
+        "name": "Agachamento Livre com Barra",
+        "muscleGroup": "Pernas",
+        "series": [
+          { "id": "s-41", "serieNumber": 1, "weight": 40, "reps": 15, "completed": false },
+          { "id": "s-42", "serieNumber": 2, "weight": 60, "reps": 12, "completed": false },
+          { "id": "s-43", "serieNumber": 3, "weight": 80, "reps": 10, "completed": false },
+          { "id": "s-44", "serieNumber": 4, "weight": 90, "reps": 8, "completed": false }
+        ]
+      },
+      {
+        "id": "c-2",
+        "exerciseId": "ex-leg-press-45",
+        "name": "Leg Press 45°",
+        "muscleGroup": "Pernas",
+        "series": [
+          { "id": "s-45", "serieNumber": 1, "weight": 100, "reps": 15, "completed": false },
+          { "id": "s-46", "serieNumber": 2, "weight": 140, "reps": 12, "completed": false },
+          { "id": "s-47", "serieNumber": 3, "weight": 180, "reps": 10, "completed": false },
+          { "id": "s-48", "serieNumber": 4, "weight": 220, "reps": 8, "completed": false }
+        ]
+      },
+      {
+        "id": "c-3",
+        "exerciseId": "ex-mesa-flexora",
+        "name": "Mesa Flexora",
+        "muscleGroup": "Pernas",
+        "series": [
+          { "id": "s-49", "serieNumber": 1, "weight": 30, "reps": 15, "completed": false },
+          { "id": "s-50", "serieNumber": 2, "weight": 40, "reps": 12, "completed": false },
+          { "id": "s-51", "serieNumber": 3, "weight": 45, "reps": 10, "completed": false },
+          { "id": "s-52", "serieNumber": 4, "weight": 50, "reps": 8, "completed": false }
+        ]
+      },
+      {
+        "id": "c-4",
+        "exerciseId": "ex-panturrilha-em-pe",
+        "name": "Gêmeos em Pé (Panturrilha)",
+        "muscleGroup": "Pernas",
+        "series": [
+          { "id": "s-53", "serieNumber": 1, "weight": 40, "reps": 15, "completed": false },
+          { "id": "s-54", "serieNumber": 2, "weight": 50, "reps": 15, "completed": false },
+          { "id": "s-55", "serieNumber": 3, "weight": 60, "reps": 12, "completed": false },
+          { "id": "s-56", "serieNumber": 4, "weight": 70, "reps": 10, "completed": false }
+        ]
+      },
+      {
+        "id": "c-5",
+        "exerciseId": "ex-abdominal-infra-paralela",
+        "name": "Elevação de Pernas na Paralela",
+        "muscleGroup": "Abdômen",
+        "series": [
+          { "id": "s-57", "serieNumber": 1, "weight": 0, "reps": 15, "completed": false },
+          { "id": "s-58", "serieNumber": 2, "weight": 0, "reps": 15, "completed": false },
+          { "id": "s-59", "serieNumber": 3, "weight": 0, "reps": 12, "completed": false },
+          { "id": "s-60", "serieNumber": 4, "weight": 0, "reps": 12, "completed": false }
+        ]
+      }
+    ]
+  }
+]
+

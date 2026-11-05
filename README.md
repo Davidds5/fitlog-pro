@@ -1,36 +1,61 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🏋️ FitLog Pro (PWA Mobile-First)
 
-## Getting Started
+App web tátil de alta performance para controle de treinos com pirâmide de carga e diário de calorias/macronutrientes com a Tabela Nutricional TACO oficial.
 
-First, run the development server:
+Desenvolvido especialmente para ser usado na academia com uma mão só e funcionar 100% offline.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🚀 Como Rodar Localmente
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Abra o terminal na pasta do projeto:
+   ```bash
+   cd C:\Users\david\Desktop\itens\dev\fitlog-pro
+   ```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+2. Instale as dependências (se necessário):
+   ```bash
+   npm install
+   ```
 
-## Learn More
+3. Inicie o servidor de desenvolvimento:
+   ```bash
+   npm run dev
+   ```
+   O app estará disponível em: `http://localhost:3000`
 
-To learn more about Next.js, take a look at the following resources:
+4. Para rodar os testes unitários (Vitest):
+   ```bash
+   npm run test
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 📱 Como Abrir e Instalar no Celular (PWA)
 
-## Deploy on Vercel
+1. Certifique-se de que o computador e o celular estão conectados no **mesmo Wi-Fi**.
+2. No terminal do Windows, descubra o seu IP local rodando:
+   ```powershell
+   ipconfig
+   ```
+   (Procure pelo `Endereço IPv4`, exemplo: `192.168.1.15`).
+3. No navegador do seu celular (Chrome ou Safari), acesse:
+   ```text
+   http://192.168.1.15:3000
+   ```
+4. **Instalar como App:**
+   - **No Chrome (Android):** Toque nos 3 pontinhos no canto superior e selecione **"Adicionar à tela inicial"** ou **"Instalar aplicativo"**.
+   - **No Safari (iOS):** Toque no botão de compartilhar (quadrado com seta pra cima) e escolha **"Adicionar à Tela de Início"**.
+5. O ícone do **FitLog Pro** aparecerá na tela do seu celular como um app nativo, abrindo em tela cheia sem barras de navegador e funcionando mesmo sem sinal de internet na academia!
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🧩 Recursos Implementados (Fase 1 MVP)
+
+- **Fichas ABC Clássicas:** Treinos A (Peito/Tríceps), B (Costas/Bíceps) e C (Pernas/Abdômen) com reordenação e exclusão.
+- **Motor de Pirâmide:** Fases de Base (12-15), Pirâmide Crescente (15-12-10-8) e Pico de Força (6-8).
+- **Ajustes Rápidos de Carga:** Botões táteis `[-2.5]`, `[-1]`, `[+1]`, `[+2.5]` e cálculo de 1RM instantâneo pela fórmula de Epley.
+- **Cronômetro de Descanso:** 60s, 90s ou 120s com alarme sintetizado (Web Audio) e vibração no celular ao concluir a série.
+- **Histórico Imediato:** Mostra a carga e repetições da última vez que o exercício foi executado.
+- **Guia com 20+ Exercícios:** Dicas seguras de execução e botão para adicionar direto à ficha.
+- **Diário de Calorias & Macros:** Base TACO com ~45 alimentos essenciais, cálculo de TMB (Mifflin-St Jeor), meta de proteína a 2g/kg e divisão de refeições.

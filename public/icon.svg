@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="128" fill="#0d0e12"/>
+  <rect x="24" y="24" width="464" height="464" rx="104" fill="none" stroke="#f59e0b" stroke-width="8" stroke-opacity="0.3"/>
+  <g transform="translate(106, 106) scale(0.6)">
+    <!-- Dumbbell Icon -->
+    <path fill="#f59e0b" d="M104 96a24 24 0 0 0-24 24v72a24 24 0 0 0 24 24h16v-120zm288 0h16a24 24 0 0 1 24 24v72a24 24 0 0 1-24 24h-16zm-72 36v48h48v-48zm-192 0v48h48v-48zm72 12h96v24h-96z"/>
+    <path fill="#ffffff" d="M144 260 L368 260 A20 20 0 0 1 388 280 L388 340 A20 20 0 0 1 368 360 L144 360 A20 20 0 0 1 124 340 L124 280 A20 20 0 0 1 144 260 Z" opacity="0.1"/>
+    <!-- Flame accent -->
+    <path fill="#fbbf24" d="M256 180c-30 45-60 85-60 135 0 66 54 120 120 120s120-54 120-120c0-65-50-105-80-145-10 40-35 60-50 60-15 0-35-25-50-50z"/>
+  </g>
+</svg>
+
