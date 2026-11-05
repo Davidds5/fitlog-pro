@@ -8,17 +8,60 @@ import { WorkoutFicha, WorkoutExercise } from './TreinoTab';
 import { AddToWorkoutSheet } from './AddToWorkoutSheet';
 import { CustomExerciseModal, CustomExerciseItem } from './CustomExerciseModal';
 import { WorkoutEditorModal } from './WorkoutEditorModal';
-import { getMuscleInfo } from '@/lib/muscles';
 import { normalizeSearchTerm } from '@/lib/macros';
 import {
   Search,
   Plus,
-  ShieldAlert,
   Dumbbell,
   X,
   ChevronDown,
   ChevronUp,
+  Info,
 } from 'lucide-react';
+
+interface ExerciseItem {
+  id: string;
+  name: string;
+  muscleGroup: string;
+  subGroup?: string;
+  equipment: string;
+  tip?: string;
+}
+
+const MUSCLE_GROUPS = ['Todos', 'Peito', 'Costas', 'Ombros', 'Bíceps', 'Tríceps', 'Pernas', 'Abdômen'] as const;
+
+const MUSCLE_ORDER: Record<string, number> = {
+  Peito: 1,
+  Costas: 2,
+  Ombros: 3,
+  Bíceps: 4,
+  Tríceps: 5,
+  Pernas: 6,
+  Abdômen: 7,
+};
+
+const SUBGROUP_ORDER: Record<string, number> = {
+  Superior: 1,
+  'Médio & Geral': 2,
+  Inferior: 3,
+  'Largura (Puxadas)': 1,
+  'Espessura (Remadas)': 2,
+  'Lombar & Cadeia Posterior': 3,
+  'Deltoide Anterior': 1,
+  'Deltoide Lateral': 2,
+  'Posterior & Trapézio': 3,
+  'Bíceps Braquial': 1,
+  'Braquial & Antebraço': 2,
+  'Cabeça Lateral & Medial': 1,
+  'Cabeça Longa': 2,
+  'Compostos & Peso Corporal': 3,
+  Quadríceps: 1,
+  'Posteriores de Coxa': 2,
+  'Glúteos & Adutores': 3,
+  Panturrilhas: 4,
+  'Infra & Dinâmico': 1,
+  'Supra & Isometria': 2,
+};
 
 export function GuiaTab() {
   const [fichas, setFichas] = useLocalStorage<WorkoutFicha[]>('fitlog_fichas', defaultFichas as unknown as WorkoutFicha[]);
@@ -30,7 +73,7 @@ export function GuiaTab() {
   const [expandedTipId, setExpandedTipId] = useState<string | null>(null);
 
   // Bottom Sheet para Adicionar a Fichas
-  const [sheetExercise, setSheetExercise] = useState<(typeof defaultExercicios)[0] | null>(null);
+  const [sheetExercise, setSheetExercise] = useState<ExerciseItem | null>(null);
 
   // Modal para criar exercício customizado
   const [isCustomModalOpen, setIsCustomModalOpen] = useState<boolean>(false);
@@ -38,20 +81,8 @@ export function GuiaTab() {
   // Modal para criar novo treino caso o usuário clique em "+ Criar novo treino"
   const [isCreateWorkoutModalOpen, setIsCreateWorkoutModalOpen] = useState<boolean>(false);
 
-  const muscleGroups = ['Todos', 'Peito', 'Costas', 'Ombros', 'Bíceps', 'Tríceps', 'Pernas', 'Abdômen'];
-
-  const MUSCLE_ORDER: Record<string, number> = {
-    Peito: 1,
-    Costas: 2,
-    Ombros: 3,
-    Bíceps: 4,
-    Tríceps: 5,
-    Pernas: 6,
-    Abdômen: 7,
-  };
-
   // Unifica exercícios nativos e personalizados ordenados de forma anatômica
-  const allExercises = [...customExercises, ...defaultExercicios].sort((a, b) => {
+  const allExercises: ExerciseItem[] = [...customExercises, ...defaultExercicios].sort((a, b) => {
     const orderA = MUSCLE_ORDER[a.muscleGroup] || 99;
     const orderB = MUSCLE_ORDER[b.muscleGroup] || 99;
     if (orderA !== orderB) return orderA - orderB;
@@ -64,11 +95,60 @@ export function GuiaTab() {
     if (!normalizedQuery) return matchesMuscle;
 
     const normalizedName = normalizeSearchTerm(ex.name);
-    const normalizedTarget = normalizeSearchTerm(ex.subTarget || '');
-    return matchesMuscle && (normalizedName.includes(normalizedQuery) || normalizedTarget.includes(normalizedQuery));
+    const normalizedSub = normalizeSearchTerm(ex.subGroup || '');
+    const normalizedEquip = normalizeSearchTerm(ex.equipment || '');
+    return (
+      matchesMuscle &&
+      (normalizedName.includes(normalizedQuery) ||
+        normalizedSub.includes(normalizedQuery) ||
+        normalizedEquip.includes(normalizedQuery))
+    );
   });
 
-  const handleOpenAddSheet = (ex: (typeof defaultExercicios)[0]) => {
+  // Agrupa os exercícios filtrados por grupo e subgrupo para evitar lista uniforme longa
+  const groupedExercises = React.useMemo(() => {
+    const groups: { title: string; subtitle?: string; items: ExerciseItem[] }[] = [];
+
+    if (selectedMuscle === 'Todos' && !searchTerm.trim()) {
+      // Quando exibe todos, agrupa por Músculo principal
+      const muscleKeys = ['Peito', 'Costas', 'Ombros', 'Bíceps', 'Tríceps', 'Pernas', 'Abdômen'];
+      for (const m of muscleKeys) {
+        const items = filteredExercises.filter((e) => e.muscleGroup === m);
+        if (items.length > 0) {
+          groups.push({ title: m, items });
+        }
+      }
+    } else {
+      // Quando filtra por músculo específico, agrupa por Subgrupo anatômico
+      const subGroupMap = new Map<string, ExerciseItem[]>();
+      for (const ex of filteredExercises) {
+        const sub = ex.subGroup || 'Geral';
+        if (!subGroupMap.has(sub)) {
+          subGroupMap.set(sub, []);
+        }
+        subGroupMap.get(sub)!.push(ex);
+      }
+
+      const sortedSubTitles = Array.from(subGroupMap.keys()).sort((a, b) => {
+        const orderA = SUBGROUP_ORDER[a] || 99;
+        const orderB = SUBGROUP_ORDER[b] || 99;
+        if (orderA !== orderB) return orderA - orderB;
+        return a.localeCompare(b);
+      });
+
+      for (const subTitle of sortedSubTitles) {
+        const items = subGroupMap.get(subTitle) || [];
+        groups.push({
+          title: selectedMuscle !== 'Todos' ? `${selectedMuscle} • ${subTitle}` : subTitle,
+          items,
+        });
+      }
+    }
+
+    return groups;
+  }, [filteredExercises, selectedMuscle, searchTerm]);
+
+  const handleOpenAddSheet = (ex: ExerciseItem) => {
     setSheetExercise(ex);
   };
 
@@ -107,14 +187,14 @@ export function GuiaTab() {
     <div className="space-y-4 max-w-md mx-auto">
       {/* Topo do Guia */}
       <div className="interactive-card p-4 shadow-sm">
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center justify-between mb-3">
           <div>
             <h1 className="text-base font-black text-[var(--text-primary)] flex items-center gap-1.5">
               <Dumbbell className="w-5 h-5 text-[var(--brand-primary)]" />
               Guia de Exercícios
             </h1>
             <p className="text-xs text-[var(--text-muted)] mt-0.5">
-              Catálogo com dicas de execução e adição expressa aos seus treinos.
+              Catálogo anatômico com execução e adição rápida aos treinos.
             </p>
           </div>
 
@@ -128,14 +208,14 @@ export function GuiaTab() {
           </button>
         </div>
 
-        {/* Barra de Busca com Botão Limpar e Contador */}
-        <div className="relative mt-2.5">
+        {/* Campo de Busca Rápida */}
+        <div className="relative">
           <Search className="w-4 h-4 text-[var(--text-muted)] absolute left-3.5 top-3" />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Buscar por nome ou músculo..."
+            placeholder="Buscar por nome, subgrupo ou equipamento..."
             className="w-full bg-[var(--surface-subtle)] border border-[var(--border)] rounded-2xl pl-10 pr-9 py-2.5 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-primary)] placeholder-[var(--text-faint)]"
           />
           {searchTerm && (
@@ -150,7 +230,7 @@ export function GuiaTab() {
 
         {/* Chips de Músculos em Grid 4x2 Perfeito (100% visível, sem cortes) */}
         <div className="grid grid-cols-4 gap-1.5 mt-3">
-          {muscleGroups.map((group) => {
+          {MUSCLE_GROUPS.map((group) => {
             const isSelected = selectedMuscle === group;
             return (
               <button
@@ -171,73 +251,113 @@ export function GuiaTab() {
         {/* Contador de Resultados */}
         <div className="text-[11px] text-[var(--text-faint)] font-semibold mt-2.5 flex items-center justify-between">
           <span>{filteredExercises.length} exercícios encontrados</span>
-          {selectedMuscle !== 'Todos' && <span>Filtro: {selectedMuscle}</span>}
+          {selectedMuscle !== 'Todos' && <span className="text-[var(--brand-primary)] font-bold">Filtro: {selectedMuscle}</span>}
         </div>
       </div>
 
-      {/* Lista de Exercícios Compactos */}
-      <div className="space-y-3">
-        {filteredExercises.map((ex) => {
-          const muscle = getMuscleInfo(ex.muscleGroup);
-          const isTipExpanded = expandedTipId === ex.id;
-
-          return (
-            <div key={ex.id} className="interactive-card p-4 shadow-sm">
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex-1">
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <span
-                      className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md border ${muscle.badgeBg} ${muscle.badgeText} ${muscle.badgeBorder}`}
-                    >
-                      {ex.muscleGroup}
-                    </span>
-                    {ex.subTarget && (
-                      <span className="text-[10px] font-bold text-[var(--text-muted)]">• {ex.subTarget}</span>
-                    )}
-                  </div>
-
-                  <h3 className="text-sm font-bold text-[var(--text-primary)] mt-1.5 leading-snug">{ex.name}</h3>
-                  <span className="text-xs text-[var(--text-muted)] font-medium block mt-0.5">
-                    Equipamento: {ex.equipment}
-                  </span>
-                </div>
-
-                <button
-                  onClick={() => handleOpenAddSheet(ex as (typeof defaultExercicios)[0])}
-                  className="btn-tactile text-xs py-1.5 px-3 min-h-[36px] flex items-center gap-1 font-bold shrink-0"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Adicionar</span>
-                </button>
+      {/* Lista Agrupada por Subgrupo com Cabeçalhos */}
+      {groupedExercises.length > 0 ? (
+        <div className="space-y-4">
+          {groupedExercises.map((group) => (
+            <div key={group.title} className="space-y-2">
+              {/* Cabeçalho da Seção */}
+              <div className="flex items-center gap-2 px-1 pt-1">
+                <span className="text-xs font-black text-[var(--text-primary)] uppercase tracking-wider">
+                  {group.title}
+                </span>
+                <span className="text-[10px] text-[var(--text-faint)] font-bold">({group.items.length})</span>
+                <span className="h-px bg-[var(--border)] flex-1" />
               </div>
 
-              {/* Dica Recolhida / Expansível */}
-              {ex.tip && (
-                <div className="mt-2.5 pt-2 border-t border-[var(--border)]">
-                  <button
-                    onClick={() => setExpandedTipId(isTipExpanded ? null : ex.id)}
-                    className="flex items-center gap-1 text-[11px] font-bold text-[var(--brand-primary)] hover:underline"
-                  >
-                    <ShieldAlert className="w-3.5 h-3.5" />
-                    <span>{isTipExpanded ? 'Ocultar dica de execução' : 'Ver dica de execução'}</span>
-                    {isTipExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                  </button>
+              {/* Cards de Exercício da Seção */}
+              <div className="space-y-2">
+                {group.items.map((ex) => {
+                  const isTipExpanded = expandedTipId === ex.id;
+                  const isCustom = ex.id.startsWith('custom-');
 
-                  {isTipExpanded && (
-                    <p className="mt-1.5 p-2.5 rounded-xl bg-[var(--surface-subtle)] text-xs text-[var(--text-primary)] leading-relaxed border border-[var(--border)] animate-in fade-in">
-                      {ex.tip}
-                    </p>
-                  )}
-                </div>
-              )}
+                  return (
+                    <div
+                      key={ex.id}
+                      className="interactive-card p-3 sm:p-3.5 shadow-xs border border-[var(--border)] hover:border-[var(--brand-primary)]/40 transition-all"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        {/* Detalhes do Exercício */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-[10px] font-bold text-[var(--text-muted)] bg-[var(--surface-subtle)] border border-[var(--border)] px-1.5 py-0.5 rounded-md">
+                              {ex.equipment}
+                            </span>
+                            {isCustom && (
+                              <span className="text-[9px] font-bold bg-amber-500/15 text-amber-500 border border-amber-500/30 px-1.5 py-0.2 rounded-md">
+                                Meu
+                              </span>
+                            )}
+                          </div>
+
+                          <h3 className="text-sm font-bold text-[var(--text-primary)] mt-1 leading-snug">
+                            {ex.name}
+                          </h3>
+                        </div>
+
+                        {/* Botão Compacto Ícone '+' */}
+                        <button
+                          type="button"
+                          onClick={() => handleOpenAddSheet(ex)}
+                          title={`Adicionar ${ex.name} à ficha`}
+                          aria-label={`Adicionar ${ex.name} à ficha`}
+                          className="btn-secondary-tactile w-10 h-10 min-h-[40px] min-w-[40px] rounded-xl flex items-center justify-center shrink-0 text-[var(--brand-primary)] hover:border-[var(--brand-primary)] active:scale-95 transition-all shadow-xs"
+                        >
+                          <Plus className="w-4 h-4 stroke-[2.5]" />
+                        </button>
+                      </div>
+
+                      {/* Dica de Execução (Recolhida por padrão) */}
+                      {ex.tip && (
+                        <div className="mt-2 pt-2 border-t border-[var(--border)]">
+                          <button
+                            type="button"
+                            onClick={() => setExpandedTipId(isTipExpanded ? null : ex.id)}
+                            className="flex items-center gap-1 text-[11px] font-bold text-[var(--text-muted)] hover:text-[var(--brand-primary)] transition-colors"
+                          >
+                            <Info className="w-3.5 h-3.5 text-[var(--brand-primary)]" />
+                            <span>{isTipExpanded ? 'Ocultar dica' : 'Ver dica de execução'}</span>
+                            {isTipExpanded ? (
+                              <ChevronUp className="w-3 h-3 text-[var(--brand-primary)]" />
+                            ) : (
+                              <ChevronDown className="w-3 h-3 text-[var(--text-muted)]" />
+                            )}
+                          </button>
+
+                          {isTipExpanded && (
+                            <p className="text-[11px] text-[var(--text-muted)] mt-1.5 p-2 rounded-xl bg-[var(--surface-subtle)] border border-[var(--border)] leading-relaxed animate-in fade-in">
+                              {ex.tip}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          );
-        })}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <div className="interactive-card p-8 text-center text-xs text-[var(--text-muted)]">
+          <p>Nenhum exercício encontrado para &ldquo;{searchTerm}&rdquo;.</p>
+          <button
+            onClick={() => setIsCustomModalOpen(true)}
+            className="btn-tactile text-xs py-2 px-3 mt-3 inline-flex items-center gap-1.5"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Criar Exercício Personalizado
+          </button>
+        </div>
+      )}
 
-      {/* Bottom Sheet de Adição a Treinos */}
+      {/* Bottom Sheet para Adicionar a Treinos */}
       <AddToWorkoutSheet
-        isOpen={sheetExercise !== null}
+        isOpen={Boolean(sheetExercise)}
         onClose={() => setSheetExercise(null)}
         exerciseName={sheetExercise ? sheetExercise.name : ''}
         muscleGroup={sheetExercise ? sheetExercise.muscleGroup : ''}
@@ -254,11 +374,10 @@ export function GuiaTab() {
         onSave={handleSaveCustomExercise}
       />
 
-      {/* Modal Criar Novo Treino (disparado a partir do Guia) */}
+      {/* Modal Criar Novo Treino (caso chamado de dentro da bottom sheet) */}
       <WorkoutEditorModal
         isOpen={isCreateWorkoutModalOpen}
         onClose={() => setIsCreateWorkoutModalOpen(false)}
-        fichaToEdit={null}
         onSave={handleCreateNewWorkout}
       />
     </div>

@@ -98,7 +98,7 @@ export default function Home() {
       </header>
 
       {/* Conteúdo Principal com max-w-md centralizado no desktop */}
-      <main className="flex-1 p-3.5 sm:p-4 max-w-md mx-auto w-full pb-32">
+      <main className="flex-1 p-3.5 sm:p-4 max-w-md mx-auto w-full pb-36 sm:pb-40">
         {activeTab === 'treino' && <TreinoTab />}
         {activeTab === 'dieta' && <DietaTab />}
         {activeTab === 'guia' && <GuiaTab />}

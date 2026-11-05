@@ -1,211 +1,219 @@
 [
   {
-    "id": "ex-supino-reto-barra",
-    "name": "Supino Reto com Barra",
-    "muscleGroup": "Peito",
-    "subTarget": "Peitoral Maior (Porção Esternal / Geral)",
-    "equipment": "Barra Olímpica e Banco Reto",
-    "tip": "Pés firmes no chão, leve arco lombar natural. Desça a barra controlando até encostar na linha dos mamilos."
-  },
-  {
     "id": "ex-supino-inclinado-halteres",
     "name": "Supino Inclinado com Halteres",
     "muscleGroup": "Peito",
-    "subTarget": "Peitoral Superior (Porção Clavicular)",
-    "equipment": "Banco 30° a 45° / Halteres",
-    "tip": "Mantenha as escápulas aduzidas e cotovelos a ~45° do tronco. Não bata os halteres no topo para não perder tensão."
+    "subGroup": "Superior",
+    "equipment": "Banco 30° / Halteres",
+    "tip": "Mantenha as escápulas aduzidas e cotovelos a ~45° do tronco. Não bata os halteres no topo."
   },
   {
     "id": "ex-supino-inclinado-barra",
     "name": "Supino Inclinado com Barra",
     "muscleGroup": "Peito",
-    "subTarget": "Peitoral Superior",
-    "equipment": "Barra e Banco Inclinado",
+    "subGroup": "Superior",
+    "equipment": "Barra e Banco 30°",
     "tip": "Pegada um pouco além da largura dos ombros. Desça a barra em direção ao topo do esterno."
+  },
+  {
+    "id": "ex-crossover-polia-baixa",
+    "name": "Crossover na Polia Baixa",
+    "muscleGroup": "Peito",
+    "subGroup": "Superior",
+    "equipment": "Cross Over (Polia Baixa)",
+    "tip": "Puxe os cabos de baixo para cima, em direção à linha do queixo, enfatizando o peitoral clavicular."
+  },
+  {
+    "id": "ex-supino-reto-barra",
+    "name": "Supino Reto com Barra",
+    "muscleGroup": "Peito",
+    "subGroup": "Médio & Geral",
+    "equipment": "Barra e Banco Reto",
+    "tip": "Pés firmes no chão, leve arco lombar natural. Desça a barra controlando até encostar na linha dos mamilos."
   },
   {
     "id": "ex-supino-reto-halteres",
     "name": "Supino Reto com Halteres",
     "muscleGroup": "Peito",
-    "subTarget": "Peitoral Maior",
+    "subGroup": "Médio & Geral",
     "equipment": "Halteres e Banco Reto",
     "tip": "Permite maior amplitude que a barra. Ao subir, aproxime os halteres mantendo a contração muscular."
-  },
-  {
-    "id": "ex-supino-declinado",
-    "name": "Supino Declinado (Barra ou Halteres)",
-    "muscleGroup": "Peito",
-    "subTarget": "Peitoral Inferior (Porção Abdominal)",
-    "equipment": "Banco Declinado",
-    "tip": "Excelente para a linha inferior do peitoral com menos estresse no deltoide anterior."
   },
   {
     "id": "ex-peck-deck-voador",
     "name": "Peck Deck / Voador na Máquina",
     "muscleGroup": "Peito",
-    "subTarget": "Peitoral Maior (Isolador / Miolo)",
-    "equipment": "Aparelho Voador / Peck Deck",
+    "subGroup": "Médio & Geral",
+    "equipment": "Aparelho Peck Deck",
     "tip": "Mantenha o peito estufado e escápulas travadas no banco. Não deixe os cotovelos passarem muito para trás."
   },
   {
     "id": "ex-crucifixo-halteres-reto",
     "name": "Crucifixo com Halteres no Banco Reto",
     "muscleGroup": "Peito",
-    "subTarget": "Peitoral Médio (Alongamento)",
+    "subGroup": "Médio & Geral",
     "equipment": "Halteres e Banco Reto",
     "tip": "Cotovelos levemente flexionados em ângulo constante. Foque em sentir o peitoral esticar na descida."
-  },
-  {
-    "id": "ex-crossover-polia-alta",
-    "name": "Crossover na Polia Alta",
-    "muscleGroup": "Peito",
-    "subTarget": "Peitoral Inferior e Miolo",
-    "equipment": "Cross Over (Polia Alta)",
-    "tip": "Incline ligeiramente o tronco à frente. Traga os cabos em direção ao quadril, cruzando levemente as mãos."
   },
   {
     "id": "ex-crossover-polia-media",
     "name": "Crossover na Polia Média",
     "muscleGroup": "Peito",
-    "subTarget": "Peitoral Médio",
+    "subGroup": "Médio & Geral",
     "equipment": "Cross Over (Polia Média)",
     "tip": "Feche os braços na linha do esterno, espremendo o peitoral no ponto final por 1 segundo."
-  },
-  {
-    "id": "ex-crossover-polia-baixa",
-    "name": "Crossover na Polia Baixa",
-    "muscleGroup": "Peito",
-    "subTarget": "Peitoral Superior",
-    "equipment": "Cross Over (Polia Baixa)",
-    "tip": "Puxe os cabos de baixo para cima, em direção à linha do queixo, enfatizando o peitoral clavicular."
-  },
-  {
-    "id": "ex-paralelas-peito",
-    "name": "Barras Paralelas (Foco Peitoral)",
-    "muscleGroup": "Peito",
-    "subTarget": "Peitoral Inferior e Tríceps",
-    "equipment": "Barras Paralelas",
-    "tip": "Incline o tronco para frente a ~30° e abra levemente os cotovelos para recrutar a parte inferior do peito."
   },
   {
     "id": "ex-flexao-solo",
     "name": "Flexão de Braços no Solo (Push-up)",
     "muscleGroup": "Peito",
-    "subTarget": "Peitoral e Core",
+    "subGroup": "Médio & Geral",
     "equipment": "Peso Corporal",
     "tip": "Mantenha o corpo em linha reta e abdômen firme. Desça até o peito quase tocar o chão."
+  },
+  {
+    "id": "ex-supino-declinado",
+    "name": "Supino Declinado",
+    "muscleGroup": "Peito",
+    "subGroup": "Inferior",
+    "equipment": "Banco Declinado",
+    "tip": "Excelente para a linha inferior do peitoral com menos estresse no deltoide anterior."
+  },
+  {
+    "id": "ex-crossover-polia-alta",
+    "name": "Crossover na Polia Alta",
+    "muscleGroup": "Peito",
+    "subGroup": "Inferior",
+    "equipment": "Cross Over (Polia Alta)",
+    "tip": "Incline ligeiramente o tronco à frente. Traga os cabos em direção ao quadril."
+  },
+  {
+    "id": "ex-paralelas-peito",
+    "name": "Barras Paralelas (Foco Peitoral)",
+    "muscleGroup": "Peito",
+    "subGroup": "Inferior",
+    "equipment": "Barras Paralelas",
+    "tip": "Incline o tronco para frente a ~30° e abra levemente os cotovelos para recrutar a parte inferior do peito."
   },
 
   {
     "id": "ex-barra-fixa-pronada",
     "name": "Barra Fixa (Pull-up Pronada)",
     "muscleGroup": "Costas",
-    "subTarget": "Dorsal Maior e Redondo Maior (Largura)",
+    "subGroup": "Largura (Puxadas)",
     "equipment": "Barra Fixa",
-    "tip": "Inicie o movimento ativando as escápulas antes de puxar com os braços. Suba até passar o queixo da barra."
+    "tip": "Inicie o movimento ativando as escápulas antes de puxar com os braços."
   },
   {
     "id": "ex-puxada-alta-aberta",
-    "name": "Puxada Alta com Pegada Pronada Aberta",
+    "name": "Puxada Alta Pronada Aberta",
     "muscleGroup": "Costas",
-    "subTarget": "Grande Dorsal (Largura das Costas)",
-    "equipment": "Polia Alta / Barra de Puxada",
+    "subGroup": "Largura (Puxadas)",
+    "equipment": "Polia Alta",
     "tip": "Puxe com os cotovelos em direção aos bolsos da calça. Não balance o tronco para trás."
   },
   {
     "id": "ex-puxada-alta-triangulo",
-    "name": "Puxada Alta com Triângulo (Pegada Neutra)",
+    "name": "Puxada Alta com Triângulo",
     "muscleGroup": "Costas",
-    "subTarget": "Grande Dorsal e Bíceps",
+    "subGroup": "Largura (Puxadas)",
     "equipment": "Polia Alta com Triângulo",
-    "tip": "Pegada neutra protege os ombros e permite puxar com mais carga, contraindo bem a dorsal."
+    "tip": "Pegada neutra protege os ombros e permite puxar com mais carga."
   },
   {
     "id": "ex-puxada-supinada",
     "name": "Puxada Alta com Pegada Supinada",
     "muscleGroup": "Costas",
-    "subTarget": "Dorsal Inferior e Bíceps",
-    "equipment": "Polia Alta / Barra Reta",
-    "tip": "Palmas voltadas para você. Excelente recrutamento das fibras inferiores da grande dorsal."
+    "subGroup": "Largura (Puxadas)",
+    "equipment": "Polia Alta / Barra",
+    "tip": "Palmas voltadas para você. Excelente recrutamento das fibras inferiores da dorsal."
+  },
+  {
+    "id": "ex-pulldown-corda",
+    "name": "Pulldown na Polia Alta com Corda",
+    "muscleGroup": "Costas",
+    "subGroup": "Largura (Puxadas)",
+    "equipment": "Polia Alta com Corda",
+    "tip": "Braços quase retos com leve flexão. Desça a barra em arco estufando o peito no ponto final."
   },
   {
     "id": "ex-remada-curvada-barra",
     "name": "Remada Curvada com Barra",
     "muscleGroup": "Costas",
-    "subTarget": "Dorsal, Trapézio Médio e Lombar (Espessura)",
+    "subGroup": "Espessura (Remadas)",
     "equipment": "Barra Olímpica",
-    "tip": "Tronco inclinado a ~45°, abdômen travado para proteger a lombar. Puxe a barra rente às coxas até o umbigo."
+    "tip": "Tronco inclinado a ~45°, abdômen travado. Puxe a barra rente às coxas até o umbigo."
   },
   {
     "id": "ex-remada-cavalinho",
     "name": "Remada Cavalinho (Barra T)",
     "muscleGroup": "Costas",
-    "subTarget": "Espessura das Costas e Romboides",
-    "equipment": "Aparelho Barra T ou Landmine",
-    "tip": "Peito apoiado ou tronco estável. Puxe cotovelos bem fechados junto ao corpo para máxima densidade."
+    "subGroup": "Espessura (Remadas)",
+    "equipment": "Barra T ou Landmine",
+    "tip": "Tronco estável. Puxe cotovelos bem fechados junto ao corpo para máxima densidade."
   },
   {
     "id": "ex-remada-baixa-triangulo",
     "name": "Remada Baixa com Triângulo",
     "muscleGroup": "Costas",
-    "subTarget": "Grande Dorsal e Romboides",
-    "equipment": "Polia Baixa / Puxador Triângulo",
-    "tip": "Coluna ereta e peito estufado. Puxe o triângulo contra o umbigo espremendo as escápulas por 1s."
+    "subGroup": "Espessura (Remadas)",
+    "equipment": "Polia Baixa",
+    "tip": "Coluna ereta e peito estufado. Puxe o triângulo contra o umbigo espremendo as escápulas."
   },
   {
     "id": "ex-remada-unilateral-serrote",
     "name": "Remada Unilateral com Halter (Serrote)",
     "muscleGroup": "Costas",
-    "subTarget": "Grande Dorsal e Lombar Estabilizadora",
+    "subGroup": "Espessura (Remadas)",
     "equipment": "Banco Reto e Halter",
-    "tip": "Apoie joelho e mão no banco. Puxe o halter em direção ao quadril, evitando girar o tronco."
-  },
-  {
-    "id": "ex-pulldown-corda",
-    "name": "Pulldown na Polia Alta com Corda / Barra",
-    "muscleGroup": "Costas",
-    "subTarget": "Isolador de Grande Dorsal",
-    "equipment": "Polia Alta com Corda ou Barra",
-    "tip": "Braços quase retos com leve flexão. Desça a barra em arco estufando o peito no ponto final."
+    "tip": "Apoie joelho e mão no banco. Puxe o halter em direção ao quadril sem girar o tronco."
   },
   {
     "id": "ex-levantamento-terra",
-    "name": "Levantamento Terra Clássico (Deadlift)",
+    "name": "Levantamento Terra Clássico",
     "muscleGroup": "Costas",
-    "subTarget": "Cadeia Posterior, Lombar e Trapézio",
-    "equipment": "Barra Olímpica e Anilhas",
-    "tip": "Mantenha a barra colada nas canelas, coluna neutra e peito aberto. Empurre o chão com os pés."
+    "subGroup": "Lombar & Cadeia Posterior",
+    "equipment": "Barra Olímpica",
+    "tip": "Barra colada nas canelas, coluna neutra e peito aberto. Empurre o chão com os pés."
   },
 
   {
     "id": "ex-desenvolvimento-halteres",
     "name": "Desenvolvimento com Halteres",
     "muscleGroup": "Ombros",
-    "subTarget": "Deltoide Anterior e Lateral",
-    "equipment": "Banco 75-80° / Halteres",
-    "tip": "Suba os halteres em trajetória de arco suave sem bater no topo e sem travar bruscamente os cotovelos."
+    "subGroup": "Deltoide Anterior",
+    "equipment": "Banco 75° / Halteres",
+    "tip": "Suba os halteres em trajetória de arco suave sem travar bruscamente os cotovelos."
   },
   {
     "id": "ex-desenvolvimento-militar-barra",
-    "name": "Desenvolvimento Militar com Barra (Overhead Press)",
+    "name": "Desenvolvimento Militar com Barra",
     "muscleGroup": "Ombros",
-    "subTarget": "Deltoide Anterior e Core",
+    "subGroup": "Deltoide Anterior",
     "equipment": "Barra Olímpica em Pé",
-    "tip": "Glúteos e abdômen bem contraídos. Passe a cabeça para a frente assim que a barra passar do queixo."
+    "tip": "Glúteos e abdômen bem contraídos. Passe a cabeça para a frente após a barra passar do queixo."
   },
   {
     "id": "ex-desenvolvimento-maquina",
     "name": "Desenvolvimento na Máquina",
     "muscleGroup": "Ombros",
-    "subTarget": "Deltoide Anterior",
-    "equipment": "Aparelho de Desenvolvimento",
-    "tip": "Regule o assento para que as manoplas comecem na linha do queixo/ombros."
+    "subGroup": "Deltoide Anterior",
+    "equipment": "Máquina de Ombros",
+    "tip": "Regule o assento para que as manoplas comecem na linha dos ombros."
+  },
+  {
+    "id": "ex-elevacao-frontal-halteres",
+    "name": "Elevação Frontal com Halteres",
+    "muscleGroup": "Ombros",
+    "subGroup": "Deltoide Anterior",
+    "equipment": "Halteres",
+    "tip": "Suba até a altura dos olhos com controle na descida. Evite embalo do tronco."
   },
   {
     "id": "ex-elevacao-lateral",
     "name": "Elevação Lateral com Halteres",
     "muscleGroup": "Ombros",
-    "subTarget": "Deltoide Lateral (Ombro Largo / Fibra Média)",
+    "subGroup": "Deltoide Lateral",
     "equipment": "Halteres",
     "tip": "Incline ligeiramente o tronco para frente. Levante os cotovelos no plano escapular (~30° à frente)."
   },
@@ -213,316 +221,308 @@
     "id": "ex-elevacao-lateral-polia",
     "name": "Elevação Lateral na Polia Baixa",
     "muscleGroup": "Ombros",
-    "subTarget": "Deltoide Lateral (Tensão Constante)",
+    "subGroup": "Deltoide Lateral",
     "equipment": "Polia Baixa",
-    "tip": "O cabo mantém tensão inclusive no início do movimento. Suba até a linha do ombro."
-  },
-  {
-    "id": "ex-elevacao-frontal-halteres",
-    "name": "Elevação Frontal com Halteres / Barra",
-    "muscleGroup": "Ombros",
-    "subTarget": "Deltoide Anterior",
-    "equipment": "Halteres ou Barra",
-    "tip": "Suba até a altura dos olhos com controle na descida. Evite embalo do corpo."
+    "tip": "O cabo mantém tensão mecânica no início do movimento. Suba até a linha do ombro."
   },
   {
     "id": "ex-crucifixo-invertido-cross",
     "name": "Crucifixo Invertido na Polia / Halteres",
     "muscleGroup": "Ombros",
-    "subTarget": "Deltoide Posterior (Ombro Traseiro)",
+    "subGroup": "Posterior & Trapézio",
     "equipment": "Polia ou Halteres",
-    "tip": "Foque no movimento do ombro traseiro sem deixar o trapézio superior roubar a carga."
+    "tip": "Foque no movimento do ombro traseiro sem deixar o trapézio roubar a carga."
   },
   {
     "id": "ex-face-pull",
     "name": "Face Pull na Polia Alta com Corda",
     "muscleGroup": "Ombros",
-    "subTarget": "Deltoide Posterior e Manguito Rotador",
+    "subGroup": "Posterior & Trapézio",
     "equipment": "Polia Alta com Corda",
-    "tip": "Puxe as pontas da corda em direção aos olhos/orelhas fazendo rotação externa dos ombros."
+    "tip": "Puxe as pontas da corda em direção aos olhos fazendo rotação externa dos ombros."
   },
   {
     "id": "ex-encolhimento-halteres",
-    "name": "Encolhimento com Halteres / Barra (Shrug)",
+    "name": "Encolhimento de Ombros (Shrug)",
     "muscleGroup": "Ombros",
-    "subTarget": "Trapézio Superior",
+    "subGroup": "Posterior & Trapézio",
     "equipment": "Halteres ou Barra",
-    "tip": "Suba os ombros em direção às orelhas em linha reta. Não gire os ombros para não desgastar a articulação."
+    "tip": "Suba os ombros em direção às orelhas em linha reta. Não gire os ombros."
   },
 
   {
     "id": "ex-rosca-direta-barra-w",
     "name": "Rosca Direta com Barra W",
     "muscleGroup": "Bíceps",
-    "subTarget": "Bíceps Braquial (Cabeça Curta e Longa)",
+    "subGroup": "Bíceps Braquial",
     "equipment": "Barra W",
-    "tip": "Cotovelos fixos colados nas costelas. Não jogue o quadril para frente ao subir a carga."
+    "tip": "Cotovelos fixos colados nas costelas. Não balance o quadril ao subir a carga."
   },
   {
     "id": "ex-rosca-direta-halteres",
-    "name": "Rosca Alternada com Halteres (Supinada)",
+    "name": "Rosca Alternada com Halteres",
     "muscleGroup": "Bíceps",
-    "subTarget": "Bíceps Braquial",
+    "subGroup": "Bíceps Braquial",
     "equipment": "Halteres",
-    "tip": "Gire o punho para fora (supinação) durante a subida para máxima contração do pico do bíceps."
+    "tip": "Gire o punho para fora (supinação) durante a subida para pico de contração."
   },
   {
     "id": "ex-rosca-scott-barra-w",
-    "name": "Rosca Scott com Barra W / Halter",
+    "name": "Rosca Scott com Barra W",
     "muscleGroup": "Bíceps",
-    "subTarget": "Cabeça Curta do Bíceps (Pico)",
+    "subGroup": "Bíceps Braquial",
     "equipment": "Banco Scott / Barra W",
-    "tip": "Apoie bem a axila no topo do banco. Não estenda totalmente os cotovelos para não estressar o tendão."
+    "tip": "Apoie a axila no topo do banco. Não estenda totalmente os cotovelos embaixo."
   },
   {
     "id": "ex-rosca-inclinada-halteres",
     "name": "Rosca no Banco Inclinado 45°",
     "muscleGroup": "Bíceps",
-    "subTarget": "Cabeça Longa do Bíceps (Alongamento)",
+    "subGroup": "Bíceps Braquial",
     "equipment": "Banco 45° e Halteres",
-    "tip": "Com os braços para trás do tronco, o bíceps inicia o movimento em alongamento máximo. Queima garantida."
-  },
-  {
-    "id": "ex-rosca-martelo",
-    "name": "Rosca Martelo com Halteres",
-    "muscleGroup": "Bíceps",
-    "subTarget": "Músculo Braquial e Braquiorradial (Antebraço)",
-    "equipment": "Halteres",
-    "tip": "Pegada neutra (palmas voltadas para dentro). Dá volume e espessura frontal ao braço."
+    "tip": "Com os braços para trás do corpo, o bíceps inicia em máximo alongamento."
   },
   {
     "id": "ex-rosca-concentrada",
     "name": "Rosca Concentrada com Halter",
     "muscleGroup": "Bíceps",
-    "subTarget": "Pico do Bíceps",
+    "subGroup": "Bíceps Braquial",
     "equipment": "Banco e Halter",
-    "tip": "Apoie o cotovelo na parte interna da coxa. Suba espremendo o bíceps no topo."
+    "tip": "Apoie o cotovelo na parte interna da coxa e suba espremendo o pico do bíceps."
   },
   {
     "id": "ex-rosca-polia-baixa",
     "name": "Rosca Bíceps na Polia Baixa",
     "muscleGroup": "Bíceps",
-    "subTarget": "Bíceps (Tensão Contínua)",
-    "equipment": "Polia Baixa com Barra Reta ou W",
-    "tip": "O cabo mantém a tensão mecânica uniforme em toda a amplitude de movimento."
+    "subGroup": "Bíceps Braquial",
+    "equipment": "Polia Baixa com Barra",
+    "tip": "O cabo mantém tensão constante por toda a amplitude de movimento."
+  },
+  {
+    "id": "ex-rosca-martelo",
+    "name": "Rosca Martelo com Halteres",
+    "muscleGroup": "Bíceps",
+    "subGroup": "Braquial & Antebraço",
+    "equipment": "Halteres",
+    "tip": "Pegada neutra (palmas voltadas para dentro). Desenvolve a espessura frontal do braço."
   },
   {
     "id": "ex-rosca-inversa",
     "name": "Rosca Inversa com Barra W",
     "muscleGroup": "Bíceps",
-    "subTarget": "Antebraço (Extensores) e Braquial",
+    "subGroup": "Braquial & Antebraço",
     "equipment": "Barra W",
-    "tip": "Pegada pronada (palmas para baixo). Excelente para antebraços fortes e prevenção de lesões."
+    "tip": "Pegada pronada (palmas para baixo). Fortalece antebraços e braquiorradial."
   },
 
   {
     "id": "ex-triceps-corda",
     "name": "Tríceps Corda na Polia Alta",
     "muscleGroup": "Tríceps",
-    "subTarget": "Cabeça Lateral do Tríceps",
+    "subGroup": "Cabeça Lateral & Medial",
     "equipment": "Polia Alta com Corda",
-    "tip": "Cotovelos colados nas costelas. No final da descida, afaste as pontas da corda para contração máxima."
+    "tip": "Cotovelos colados nas costelas. No final, afaste as pontas da corda para contração total."
   },
   {
     "id": "ex-triceps-pulley-barra",
-    "name": "Tríceps Pulley com Barra Reta / V",
+    "name": "Tríceps Pulley com Barra Reta",
     "muscleGroup": "Tríceps",
-    "subTarget": "Cabeça Lateral e Medial",
+    "subGroup": "Cabeça Lateral & Medial",
     "equipment": "Polia Alta com Barra",
-    "tip": "Mantenha os cotovelos fixos apontando para o chão. Estenda os braços completamente sem movimentar os ombros."
+    "tip": "Cotovelos apontados para o chão. Estenda os braços sem balançar os ombros."
+  },
+  {
+    "id": "ex-triceps-coice-polia",
+    "name": "Tríceps Coice na Polia Baixa",
+    "muscleGroup": "Tríceps",
+    "subGroup": "Cabeça Lateral & Medial",
+    "equipment": "Polia Baixa ou Halter",
+    "tip": "Tronco paralelo ao chão, cotovelo erguido na costela. Estenda o braço para trás."
   },
   {
     "id": "ex-triceps-testa",
     "name": "Tríceps Testa com Barra W",
     "muscleGroup": "Tríceps",
-    "subTarget": "Cabeça Longa do Tríceps",
+    "subGroup": "Cabeça Longa",
     "equipment": "Banco Reto / Barra W",
-    "tip": "Leve a barra em direção ao topo da cabeça ou ligeiramente atrás do banco para manter tensão na cabeça longa."
+    "tip": "Leve a barra em direção ao topo da cabeça para manter tensão contínua na cabeça longa."
   },
   {
     "id": "ex-triceps-frances-halter",
-    "name": "Tríceps Francês com Halter (Unilateral ou Bilateral)",
+    "name": "Tríceps Francês com Halter",
     "muscleGroup": "Tríceps",
-    "subTarget": "Cabeça Longa (Máximo Alongamento)",
+    "subGroup": "Cabeça Longa",
     "equipment": "Halter e Banco 75°",
-    "tip": "Cotovelo apontado para o teto. Desça o halter atrás da nuca sentindo o tríceps esticar totalmente."
+    "tip": "Cotovelo apontado para o teto. Desça o halter atrás da nuca sentindo alongar."
   },
   {
     "id": "ex-paralelas-triceps",
     "name": "Mergulho nas Paralelas (Foco Tríceps)",
     "muscleGroup": "Tríceps",
-    "subTarget": "Tríceps Completo",
+    "subGroup": "Compostos & Peso Corporal",
     "equipment": "Barras Paralelas",
-    "tip": "Mantenha o tronco o mais ereto e vertical possível para que a carga incida principalmente no tríceps."
+    "tip": "Mantenha o tronco ereto e vertical para focar a carga no tríceps."
   },
   {
     "id": "ex-triceps-banco",
-    "name": "Mergulho no Banco (Tríceps Banco)",
+    "name": "Mergulho no Banco",
     "muscleGroup": "Tríceps",
-    "subTarget": "Tríceps e Peitoral Inferior",
+    "subGroup": "Compostos & Peso Corporal",
     "equipment": "Banco Reto",
-    "tip": "Mãos apoiadas na borda do banco. Desça rente ao banco flexionando os cotovelos até 90°."
-  },
-  {
-    "id": "ex-triceps-coice-polia",
-    "name": "Tríceps Coice na Polia Baixa / Halter",
-    "muscleGroup": "Tríceps",
-    "subTarget": "Cabeça Lateral (Pico de Contração)",
-    "equipment": "Polia Baixa ou Halter",
-    "tip": "Tronco paralelo ao chão, cotovelo erguido na linha da costela. Estenda o braço para trás."
+    "tip": "Mãos na borda do banco. Desça rente flexionando os cotovelos até 90°."
   },
 
   {
     "id": "ex-agachamento-livre",
     "name": "Agachamento Livre com Barra",
     "muscleGroup": "Pernas",
-    "subTarget": "Quadríceps, Glúteos e Core",
-    "equipment": "Gaiola de Agachamento e Barra",
-    "tip": "Pés na largura dos ombros, joelhos alinhados aos dedos dos pés. Desça quebrando a paralela mantendo o peito alto."
+    "subGroup": "Quadríceps",
+    "equipment": "Barra Olímpica e Gaiola",
+    "tip": "Pés na largura dos ombros, joelhos alinhados aos dedos dos pés. Desça quebrando a paralela."
   },
   {
     "id": "ex-leg-press-45",
     "name": "Leg Press 45°",
     "muscleGroup": "Pernas",
-    "subTarget": "Quadríceps e Glúteos",
+    "subGroup": "Quadríceps",
     "equipment": "Aparelho Leg Press 45°",
-    "tip": "Pés no meio da plataforma. Nunca trave os joelhos em hiperextensão no topo e não descole a lombar do encosto."
+    "tip": "Nunca trave os joelhos em hiperextensão no topo e não descole a lombar do encosto."
   },
   {
     "id": "ex-hack-squat",
-    "name": "Agachamento Hack (Hack Machine)",
+    "name": "Agachamento Hack",
     "muscleGroup": "Pernas",
-    "subTarget": "Isolador Composto de Quadríceps",
+    "subGroup": "Quadríceps",
     "equipment": "Máquina Hack",
-    "tip": "A máquina estabiliza a coluna. Excelente para focar tensão pura na musculatura da coxa com segurança."
+    "tip": "A máquina estabiliza a coluna, permitindo focar 100% no quadríceps."
   },
   {
     "id": "ex-agachamento-bulgaro",
     "name": "Agachamento Búlgaro com Halteres",
     "muscleGroup": "Pernas",
-    "subTarget": "Quadríceps e Glúteo Médio/Máximo",
+    "subGroup": "Quadríceps",
     "equipment": "Banco e Halteres",
-    "tip": "Um pé apoiado atrás no banco. Desça o joelho de trás em direção ao chão mantendo o peso na perna da frente."
+    "tip": "Um pé apoiado atrás no banco. Desça o joelho de trás mantendo o peso na perna frontal."
   },
   {
     "id": "ex-passada-avanco",
-    "name": "Avanço / Passada com Halteres",
+    "name": "Passada / Avanço com Halteres",
     "muscleGroup": "Pernas",
-    "subTarget": "Quadríceps e Glúteos",
+    "subGroup": "Quadríceps",
     "equipment": "Halteres",
-    "tip": "Dê passos firmes descendo até o joelho traseiro quase tocar o chão em ângulo de 90°."
+    "tip": "Dê passos firmes descendo o joelho de trás em 90° com tronco ereto."
   },
   {
     "id": "ex-cadeira-extensora",
     "name": "Cadeira Extensora",
     "muscleGroup": "Pernas",
-    "subTarget": "Isolador de Quadríceps (Reto Femoral)",
+    "subGroup": "Quadríceps",
     "equipment": "Cadeira Extensora",
-    "tip": "Segure 1 a 2 segundos no topo em contração máxima e desça em 3 segundos controlando o peso."
+    "tip": "Segure 1 segundo no topo em contração e desça controlando em 3 segundos."
   },
   {
     "id": "ex-mesa-flexora",
     "name": "Mesa Flexora Deitada",
     "muscleGroup": "Pernas",
-    "subTarget": "Posteriores de Coxa (Isquiotibiais)",
+    "subGroup": "Posteriores de Coxa",
     "equipment": "Mesa Flexora",
-    "tip": "Mantenha o quadril colado contra o banco durante a subida para não usar impulso lombar."
+    "tip": "Mantenha o quadril pressionado contra o banco durante toda a subida."
   },
   {
     "id": "ex-cadeira-flexora",
     "name": "Cadeira Flexora Sentada",
     "muscleGroup": "Pernas",
-    "subTarget": "Isquiotibiais (Alongamento Inicial)",
+    "subGroup": "Posteriores de Coxa",
     "equipment": "Cadeira Flexora",
-    "tip": "Com o quadril flexionado a 90°, os posteriores iniciam mais alongados, gerando excelente hipertrofia."
+    "tip": "Com o quadril flexionado, os posteriores iniciam mais alongados."
   },
   {
     "id": "ex-stiff-halteres",
     "name": "Stiff com Barra ou Halteres",
     "muscleGroup": "Pernas",
-    "subTarget": "Posterior de Coxa e Glúteos",
+    "subGroup": "Posteriores de Coxa",
     "equipment": "Barra ou Halteres",
-    "tip": "Joelhos semiflexionados e travados. Jogue o quadril para trás como se fosse encostar na parede."
+    "tip": "Joelhos semiflexionados travados. Jogue o quadril para trás como fechando uma porta."
   },
   {
     "id": "ex-elevacao-pelvica",
-    "name": "Elevação Pélvica com Barra / Máquina",
+    "name": "Elevação Pélvica com Barra",
     "muscleGroup": "Pernas",
-    "subTarget": "Glúteo Máximo",
-    "equipment": "Banco e Barra com Almofada",
-    "tip": "Apoie as escápulas no banco. Suba empurrando pelos calcanhares e aperte os glúteos no topo por 2 segundos."
+    "subGroup": "Glúteos & Adutores",
+    "equipment": "Banco e Barra",
+    "tip": "Suba empurrando pelos calcanhares e aperte os glúteos no topo por 2 segundos."
   },
   {
     "id": "ex-cadeira-abdutora",
     "name": "Cadeira Abdutora",
     "muscleGroup": "Pernas",
-    "subTarget": "Glúteo Médio e Mínimo",
+    "subGroup": "Glúteos & Adutores",
     "equipment": "Cadeira Abdutora",
-    "tip": "Mantenha as costas apoiadas ou levemente inclinadas para frente. Abra com controle muscular."
+    "tip": "Mantenha as costas apoiadas. Abra com controle muscular sem deixar bater."
   },
   {
     "id": "ex-cadeira-adutora",
     "name": "Cadeira Adutora",
     "muscleGroup": "Pernas",
-    "subTarget": "Parte Interna da Coxa (Adutores)",
+    "subGroup": "Glúteos & Adutores",
     "equipment": "Cadeira Adutora",
-    "tip": "Feche as pernas espremendo os adutores e controle a volta sem deixar as placas baterem."
+    "tip": "Feche as pernas espremendo a parte interna da coxa e controle a volta."
   },
   {
     "id": "ex-panturrilha-em-pe",
-    "name": "Panturrilha em Pé na Máquina / Degrau",
+    "name": "Panturrilha em Pé na Máquina",
     "muscleGroup": "Pernas",
-    "subTarget": "Gastrocnêmio",
-    "equipment": "Aparelho em Pé ou Smith",
-    "tip": "Alongue ao máximo na descida e segure 2 segundos no ponto mais alto na ponta dos pés."
+    "subGroup": "Panturrilhas",
+    "equipment": "Aparelho em Pé / Degrau",
+    "tip": "Alongue ao máximo embaixo e segure 2 segundos no ponto mais alto na ponta dos pés."
   },
   {
     "id": "ex-panturrilha-sentado-solear",
-    "name": "Panturrilha Sentado (Gêmeos Sentado)",
+    "name": "Panturrilha Sentado (Gêmeos)",
     "muscleGroup": "Pernas",
-    "subTarget": "Músculo Sóleo",
-    "equipment": "Aparelho de Panturrilha Sentado",
-    "tip": "Com os joelhos flexionados a 90°, o sóleo faz praticamente todo o esforço de empurrar a carga."
+    "subGroup": "Panturrilhas",
+    "equipment": "Aparelho Sentado",
+    "tip": "Com joelhos em 90°, o músculo sóleo realiza praticamente todo o movimento."
   },
 
   {
     "id": "ex-abdominal-infra-paralela",
-    "name": "Elevação de Pernas na Paralela / Barra",
+    "name": "Elevação de Pernas na Paralela",
     "muscleGroup": "Abdômen",
-    "subTarget": "Reto Abdominal (Região Infra)",
+    "subGroup": "Infra & Dinâmico",
     "equipment": "Capitão ou Barra Fixa",
-    "tip": "Não apenas balance as pernas: enrole o quadril em direção ao peito para contrair o abdômen."
-  },
-  {
-    "id": "ex-abdominal-crunch-polia",
-    "name": "Crunch Abdominal na Polia Alta (Corda)",
-    "muscleGroup": "Abdômen",
-    "subTarget": "Reto Abdominal (Região Supra)",
-    "equipment": "Polia Alta com Corda e Colchonete",
-    "tip": "Ajoelhado, segure a corda ao lado da cabeça e enrole a coluna em direção ao chão contraindo o abdômen."
-  },
-  {
-    "id": "ex-prancha-isometrica",
-    "name": "Prancha Abdominal Isométrica no Solo",
-    "muscleGroup": "Abdômen",
-    "subTarget": "Core Profundo (Transverso do Abdômen)",
-    "equipment": "Colchonete",
-    "tip": "Abdômen e glúteos travados sem deixar o quadril cair ou empinar excessivamente."
+    "tip": "Enrole o quadril em direção ao peito para contrair as fibras inferiores do abdômen."
   },
   {
     "id": "ex-abdominal-infra-chao",
     "name": "Abdominal Infra no Solo",
     "muscleGroup": "Abdômen",
-    "subTarget": "Reto Abdominal Infra",
+    "subGroup": "Infra & Dinâmico",
     "equipment": "Colchonete",
-    "tip": "Deite no colchonete, levante as pernas controlando e tire ligeiramente o quadril do solo no final."
+    "tip": "Tire ligeiramente o quadril do solo no ponto final da subida de pernas."
   },
   {
     "id": "ex-roda-abdominal",
     "name": "Roda Abdominal (Ab Wheel)",
     "muscleGroup": "Abdômen",
-    "subTarget": "Core Completo e Anti-extensão",
+    "subGroup": "Infra & Dinâmico",
     "equipment": "Roda Abdominal",
-    "tip": "Ajoelhe-se e role a roda para frente até onde mantiver o abdômen tenso, sem arquear a lombar."
+    "tip": "Role para frente mantendo o abdômen tenso, sem arquear a lombar."
+  },
+  {
+    "id": "ex-abdominal-crunch-polia",
+    "name": "Crunch Abdominal na Polia com Corda",
+    "muscleGroup": "Abdômen",
+    "subGroup": "Supra & Isometria",
+    "equipment": "Polia Alta com Corda",
+    "tip": "Ajoelhado, enrole a coluna em direção ao chão espremendo o abdômen."
+  },
+  {
+    "id": "ex-prancha-isometrica",
+    "name": "Prancha Abdominal Isométrica",
+    "muscleGroup": "Abdômen",
+    "subGroup": "Supra & Isometria",
+    "equipment": "Colchonete",
+    "tip": "Corpo alinhado em linha reta, abdômen e glúteos contraídos sem desabar o quadril."
   }
 ]
