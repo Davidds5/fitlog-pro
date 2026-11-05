@@ -130,14 +130,19 @@ export function normalizeSearchTerm(term: string): string {
 }
 
 /**
- * Busca alimentos de forma rápida e tolerante a acentos.
+ * Busca alimentos de forma rápida e tolerante a acentos e categorias.
  */
-export function searchFoods(foods: FoodItem[], query: string): FoodItem[] {
+export function searchFoods(foods: FoodItem[], query: string, category?: string): FoodItem[] {
+  let list = foods;
+  if (category && category !== 'Todos') {
+    list = list.filter((f) => f.category === category);
+  }
+
   const normalizedQuery = normalizeSearchTerm(query);
-  if (!normalizedQuery) return foods.slice(0, 20);
+  if (!normalizedQuery) return list;
 
   const tokens = normalizedQuery.split(/\s+/).filter(Boolean);
-  return foods.filter((food) => {
+  return list.filter((food) => {
     const normalizedName = normalizeSearchTerm(food.name);
     const normalizedCategory = normalizeSearchTerm(food.category);
     return tokens.every((token) => normalizedName.includes(token) || normalizedCategory.includes(token));
