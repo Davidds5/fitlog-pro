@@ -28,32 +28,34 @@
   --status-positive: #15803D;
   --status-warning: #D97706;
   --status-negative: #DC2626;
+  --gold-pr: #D97706;
 }
 
 .dark {
-  /* PALETA TERROSA MINERAL ESCURA (front_padrao Dark) */
-  --background: #140E0A;
-  --foreground: #F7F3EE;
-  --surface: #1E1510;
-  --surface-hover: #271C15;
-  --surface-subtle: #2D2018;
-  --border: rgba(226, 215, 203, 0.14);
+  /* PALETA MULTI-CAMADA MINERAL ESCURA (Fundo neutro + Superfícies em 2 níveis) */
+  --background: #0B0C0E;
+  --foreground: #F5F5F7;
+  --surface: #14161C;
+  --surface-hover: #1A1D24;
+  --surface-subtle: #1F222B;
+  --border: rgba(255, 255, 255, 0.08);
   --border-focus: rgba(224, 109, 40, 0.5);
 
-  --text-primary: #F7F3EE;
-  --text-muted: #B8A699;
-  --text-faint: #856E64;
+  --text-primary: #F5F5F7;
+  --text-muted: #9BA1B0;
+  --text-faint: #676E7E;
 
   --brand-primary: #E06D28;
   --brand-primary-hover: #F07D38;
   --brand-contrast: #FAF6F0;
   --brand-soft: #C4687E;
   --btn-shadow: #5A2204;
-  --btn-secondary-shadow: #2D2018;
+  --btn-secondary-shadow: #101217;
 
   --status-positive: #22C55E;
   --status-warning: #F59E0B;
   --status-negative: #EF4444;
+  --gold-pr: #F59E0B;
 }
 
 body {
@@ -98,11 +100,6 @@ body {
   white-space: nowrap;
 }
 
-.btn-tactile:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 0 var(--btn-shadow);
-}
-
 .btn-tactile:active {
   transform: translateY(2px);
   box-shadow: 0 1px 0 var(--btn-shadow);
@@ -130,12 +127,6 @@ body {
   white-space: nowrap;
 }
 
-.btn-secondary-tactile:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 0 var(--btn-secondary-shadow);
-  border-color: var(--brand-primary);
-}
-
 .btn-secondary-tactile:active {
   transform: translateY(2px);
   box-shadow: 0 1px 0 var(--btn-secondary-shadow);
@@ -161,11 +152,6 @@ body {
   white-space: nowrap;
 }
 
-.btn-success-tactile:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 0 #0D5025;
-}
-
 .btn-success-tactile:active {
   transform: translateY(2px);
   box-shadow: 0 1px 0 #0D5025;
@@ -181,8 +167,11 @@ body {
               border-color 180ms ease-out;
 }
 
-.interactive-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px -4px rgba(45, 25, 15, 0.08);
-  border-color: var(--brand-primary);
+/* Scrollbar oculta */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

@@ -24,6 +24,13 @@ export interface LastPerformanceData {
   oneRM: number;
 }
 
+export interface HistoryEntryLike {
+  exerciseId: string;
+  weight: number;
+  reps: number;
+  oneRM: number;
+}
+
 /**
  * Fórmula de Epley para estimar 1 Repetição Máxima (1RM).
  * 1RM = Peso * (1 + Reps / 30)
@@ -84,6 +91,36 @@ export function isRepsOutOfRange(reps: number, minReps: number, maxReps: number)
 }
 
 /**
+ * Verifica se a série atual quebrou um Recorde Pessoal (PR) de peso ou 1RM.
+ */
+export function checkPersonalRecord(
+  exerciseId: string,
+  weight: number,
+  reps: number,
+  history: HistoryEntryLike[]
+): { isPR: boolean; label?: string } {
+  if (weight <= 0 || reps <= 0) return { isPR: false };
+  const current1RM = calculate1RM(weight, reps);
+
+  const prevLogs = history.filter((h) => h.exerciseId === exerciseId);
+  if (!prevLogs.length) {
+    return { isPR: false }; // Primeiro treino não conta como quebra de recorde
+  }
+
+  const maxPrevWeight = Math.max(...prevLogs.map((h) => h.weight));
+  const maxPrev1RM = Math.max(...prevLogs.map((h) => h.oneRM));
+
+  if (weight > maxPrevWeight) {
+    return { isPR: true, label: `PR +${Math.round((weight - maxPrevWeight) * 10) / 10}kg` };
+  }
+  if (current1RM > maxPrev1RM + 1) {
+    return { isPR: true, label: `PR 1RM ~${current1RM}kg` };
+  }
+
+  return { isPR: false };
+}
+
+/**
  * Recalcula valores sugeridos das séries com base na fase e no último treino.
  * NÃO sobrescreve séries já concluídas.
  */
@@ -98,7 +135,6 @@ export function recalculateSeriesForPhase(
     : 0;
 
   return currentSeries.map((serie, index) => {
-    // Não sobrescrever séries já concluídas
     if (serie.completed) {
       return serie;
     }

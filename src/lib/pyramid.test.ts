@@ -3,8 +3,10 @@ import {
   calculate1RM,
   isRepsOutOfRange,
   recalculateSeriesForPhase,
+  checkPersonalRecord,
   ExerciseSerie,
   LastPerformanceData,
+  HistoryEntryLike,
 } from './pyramid';
 
 describe('pyramid lib', () => {
@@ -25,13 +27,11 @@ describe('pyramid lib', () => {
 
     const result = recalculateSeriesForPhase(initialSeries, 'base', lastPerf);
 
-    // Todas as 4 séries devem ter a mesma carga moderada (65kg para 1RM de 100)
     expect(result[0].weight).toBe(65);
     expect(result[1].weight).toBe(65);
     expect(result[2].weight).toBe(65);
     expect(result[3].weight).toBe(65);
 
-    // Reps devem estar dentro da faixa 12-15
     result.forEach((s) => {
       expect(s.reps).toBeGreaterThanOrEqual(12);
       expect(s.reps).toBeLessThanOrEqual(15);
@@ -49,13 +49,11 @@ describe('pyramid lib', () => {
 
     const result = recalculateSeriesForPhase(initialSeries, 'piramide', lastPerf);
 
-    // Reps decrescentes
     expect(result[0].reps).toBe(15);
     expect(result[1].reps).toBe(12);
     expect(result[2].reps).toBe(10);
     expect(result[3].reps).toBe(8);
 
-    // Carga estritamente crescente
     expect(result[0].weight).toBeLessThan(result[1].weight);
     expect(result[1].weight).toBeLessThan(result[2].weight);
     expect(result[2].weight).toBeLessThan(result[3].weight);
@@ -72,14 +70,12 @@ describe('pyramid lib', () => {
 
     const result = recalculateSeriesForPhase(initialSeries, 'pico', lastPerf);
 
-    // Reps entre 6 e 8
     result.forEach((s) => {
       expect(s.reps).toBeGreaterThanOrEqual(6);
       expect(s.reps).toBeLessThanOrEqual(8);
     });
 
-    // Cargas altas (> 80% de 1RM) e próximas entre si
-    expect(result[0].weight).toBe(83); // 82.5 arredondado para step 1
+    expect(result[0].weight).toBe(83);
     expect(result[1].weight).toBe(85);
     expect(result[2].weight).toBe(88);
     expect(result[3].weight).toBe(90);
@@ -88,18 +84,16 @@ describe('pyramid lib', () => {
   it('Não deve sobrescrever séries já concluídas ao recalcular fase', () => {
     const lastPerf: LastPerformanceData = { weight: 100, reps: 1, oneRM: 100 };
     const initialSeries: ExerciseSerie[] = [
-      { id: '1', serieNumber: 1, weight: 50, reps: 12, completed: true }, // CONCLUÍDA
+      { id: '1', serieNumber: 1, weight: 50, reps: 12, completed: true },
       { id: '2', serieNumber: 2, weight: 0, reps: 10, completed: false },
     ];
 
     const result = recalculateSeriesForPhase(initialSeries, 'pico', lastPerf);
 
-    // Série 1 concluída permanece intacta
     expect(result[0].weight).toBe(50);
     expect(result[0].reps).toBe(12);
     expect(result[0].completed).toBe(true);
 
-    // Série 2 não concluída é recalculada
     expect(result[1].weight).toBe(85);
     expect(result[1].reps).toBe(8);
   });
@@ -115,9 +109,25 @@ describe('pyramid lib', () => {
   });
 
   it('isRepsOutOfRange detecta reps fora da faixa da meta', () => {
-    expect(isRepsOutOfRange(10, 12, 15)).toBe(true); // abaixo
-    expect(isRepsOutOfRange(16, 12, 15)).toBe(true); // acima
-    expect(isRepsOutOfRange(12, 12, 15)).toBe(false); // dentro
-    expect(isRepsOutOfRange(15, 12, 15)).toBe(false); // dentro
+    expect(isRepsOutOfRange(10, 12, 15)).toBe(true);
+    expect(isRepsOutOfRange(16, 12, 15)).toBe(true);
+    expect(isRepsOutOfRange(12, 12, 15)).toBe(false);
+    expect(isRepsOutOfRange(15, 12, 15)).toBe(false);
+  });
+
+  it('checkPersonalRecord detecta quando o usuário quebra o recorde de carga', () => {
+    const history: HistoryEntryLike[] = [
+      { exerciseId: 'supino', weight: 80, reps: 10, oneRM: 106.7 },
+      { exerciseId: 'supino', weight: 85, reps: 8, oneRM: 107.7 },
+    ];
+
+    // Carga maior que 85kg -> PR!
+    const resPR = checkPersonalRecord('supino', 90, 8, history);
+    expect(resPR.isPR).toBe(true);
+    expect(resPR.label).toContain('PR +5kg');
+
+    // Carga menor que o recorde -> Sem PR
+    const resNoPR = checkPersonalRecord('supino', 80, 8, history);
+    expect(resNoPR.isPR).toBe(false);
   });
 });
