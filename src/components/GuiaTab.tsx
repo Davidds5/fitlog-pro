@@ -148,26 +148,24 @@ export function GuiaTab() {
           )}
         </div>
 
-        {/* Chips de Músculos com Rolagem Suave sem Barra Visível */}
-        <div className="relative mt-3 -mx-1 px-1">
-          <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar scroll-smooth pr-6">
-            {muscleGroups.map((group) => {
-              const isSelected = selectedMuscle === group;
-              return (
-                <button
-                  key={group}
-                  onClick={() => setSelectedMuscle(group)}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all border shrink-0 min-h-[34px] ${
-                    isSelected
-                      ? 'bg-[var(--brand-primary)] text-white border-[var(--brand-primary)] shadow-xs'
-                      : 'bg-[var(--surface-subtle)] text-[var(--text-muted)] border-[var(--border)] hover:border-[var(--brand-primary)]'
-                  }`}
-                >
-                  {group}
-                </button>
-              );
-            })}
-          </div>
+        {/* Chips de Músculos em Grid 4x2 Perfeito (100% visível, sem cortes) */}
+        <div className="grid grid-cols-4 gap-1.5 mt-3">
+          {muscleGroups.map((group) => {
+            const isSelected = selectedMuscle === group;
+            return (
+              <button
+                key={group}
+                onClick={() => setSelectedMuscle(group)}
+                className={`py-2 px-1 text-center rounded-xl text-xs font-bold transition-all border min-h-[36px] flex items-center justify-center truncate ${
+                  isSelected
+                    ? 'bg-[var(--brand-primary)] text-white border-[var(--brand-primary)] shadow-xs'
+                    : 'bg-[var(--surface-subtle)] text-[var(--text-muted)] border-[var(--border)] hover:border-[var(--brand-primary)] hover:text-[var(--text-primary)]'
+                }`}
+              >
+                {group}
+              </button>
+            );
+          })}
         </div>
 
         {/* Contador de Resultados */}

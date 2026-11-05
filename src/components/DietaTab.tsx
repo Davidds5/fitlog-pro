@@ -392,16 +392,16 @@ export function DietaTab() {
               </button>
             </div>
 
-            {/* Chips de Categorias */}
-            <div className="flex gap-1.5 overflow-x-auto no-scrollbar py-1 mb-2.5 -mx-1 px-1">
+            {/* Chips de Categorias em Quebra Limpa (sem corte lateral) */}
+            <div className="flex flex-wrap gap-1.5 py-1 mb-2.5">
               {CATEGORIES.map((cat) => (
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
-                  className={`text-[11px] px-2.5 py-1 rounded-full whitespace-nowrap transition-all font-semibold ${
+                  className={`text-[11px] px-2.5 py-1 rounded-xl whitespace-nowrap transition-all font-semibold border ${
                     selectedCategory === cat
-                      ? 'bg-[var(--brand-primary)] text-white shadow-xs'
-                      : 'bg-[var(--surface-subtle)] text-[var(--text-muted)] border border-[var(--border)] hover:text-[var(--text-primary)]'
+                      ? 'bg-[var(--brand-primary)] text-white border-[var(--brand-primary)] shadow-xs'
+                      : 'bg-[var(--surface-subtle)] text-[var(--text-muted)] border-[var(--border)] hover:text-[var(--text-primary)]'
                   }`}
                 >
                   {cat}
