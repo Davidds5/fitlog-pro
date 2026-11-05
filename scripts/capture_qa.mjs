@@ -70,3 +70,4 @@ run().catch((err) => {
   console.error('Erro ao capturar screenshots:', err);
   process.exit(1);
 });
+
