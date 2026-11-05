@@ -57,3 +57,4 @@ Quando o FitLog Pro evoluir para backend em nuvem (Neon Postgres + Prisma + Next
 3. **Rate Limiting:** Proteção contra força bruta em rotas de autenticação via Upstash Redis.
 4. **Proteção CSRF:** Validação de cabeçalho `Origin` em Server Actions e Route Handlers.
 5. **Runtime Env Validation:** Validação de `DATABASE_URL` e `AUTH_SECRET` via Zod antes do start da aplicação.
+

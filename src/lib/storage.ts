@@ -109,5 +109,6 @@ export interface DailyDietLog {
     protein: number;
     carbs: number;
     fat: number;
+    unitDisplay?: string;
   }[];
 }

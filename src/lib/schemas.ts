@@ -73,6 +73,7 @@ export const MealItemLogSchema = z.object({
   protein: z.number().min(0).max(1000),
   carbs: z.number().min(0).max(1000),
   fat: z.number().min(0).max(1000),
+  unitDisplay: z.string().max(60).optional(),
 });
 
 // Schema de Log Diário de Dieta
@@ -93,6 +94,8 @@ export const CustomFoodItemSchema = z.object({
   protein: z.number().min(0).max(500),
   carbs: z.number().min(0).max(500),
   fat: z.number().min(0).max(500),
+  unitWeightGrams: z.number().min(1).max(2000).optional(),
+  unitName: z.string().max(30).optional(),
 });
 
 export const CustomFoodsArraySchema = z.array(CustomFoodItemSchema).max(500);
@@ -137,3 +140,4 @@ export function validateStorageData<T>(key: string, data: unknown, fallback: T):
   console.warn(`[FitLog Security] Dados inválidos ou adulterados no LocalStorage para "${key}". Restaurando fallback seguro.`, result.error.format());
   return fallback;
 }
+

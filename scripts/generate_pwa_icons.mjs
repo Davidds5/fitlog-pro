@@ -44,3 +44,4 @@ generateIcons().catch((err) => {
   console.error('Erro gerando ícones:', err);
   process.exit(1);
 });
+

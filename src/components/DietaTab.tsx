@@ -78,6 +78,11 @@ export function DietaTab() {
   const [newFoodProtein, setNewFoodProtein] = useState<number>(20);
   const [newFoodCarbs, setNewFoodCarbs] = useState<number>(10);
   const [newFoodFat, setNewFoodFat] = useState<number>(5);
+  const [newFoodUnitWeight, setNewFoodUnitWeight] = useState<number | ''>('');
+  const [newFoodUnitName, setNewFoodUnitName] = useState<string>('');
+
+  // Modo de porção: por unidade ou por gramas
+  const [portionMode, setPortionMode] = useState<'unit' | 'grams'>('unit');
 
   const goals = calculateMacroGoals(profile);
 
@@ -99,12 +104,48 @@ export function DietaTab() {
     setSelectedMealForAdd(meal);
     setSearchQuery('');
     setSelectedCategory('Todos');
-    setPortionGrams(100);
+    const initialFood = allFoods[0] || (tacoFoods[0] as FoodItem);
+    setSelectedFood(initialFood);
+    if (initialFood.unitWeightGrams) {
+      setPortionMode('unit');
+      setPortionGrams(initialFood.unitWeightGrams);
+    } else {
+      setPortionMode('grams');
+      setPortionGrams(100);
+    }
     setIsAddFoodModalOpen(true);
+  };
+
+  const handleSelectFood = (food: FoodItem) => {
+    setSelectedFood(food);
+    if (food.unitWeightGrams) {
+      setPortionMode('unit');
+      setPortionGrams(food.unitWeightGrams);
+    } else {
+      setPortionMode('grams');
+      setPortionGrams(100);
+    }
   };
 
   const handleAddFoodToMeal = () => {
     const macros = calculatePortionMacros(selectedFood, portionGrams);
+    let unitDisplay: string | undefined = undefined;
+    if (selectedFood.unitWeightGrams && selectedFood.unitName) {
+      const units = portionGrams / selectedFood.unitWeightGrams;
+      const formattedUnits = units % 1 === 0 ? units.toString() : units.toFixed(1);
+      const pluralName =
+        units > 1
+          ? selectedFood.unitName === 'ovo'
+            ? 'ovos'
+            : selectedFood.unitName === 'fatia'
+            ? 'fatias'
+            : selectedFood.unitName === 'colher'
+            ? 'colheres'
+            : `${selectedFood.unitName}s`
+          : selectedFood.unitName;
+      unitDisplay = `${formattedUnits} ${pluralName}`;
+    }
+
     const newMealItem = {
       id: `food-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`,
       mealType: selectedMealForAdd,
@@ -114,6 +155,7 @@ export function DietaTab() {
       protein: macros.protein,
       carbs: macros.carbs,
       fat: macros.fat,
+      unitDisplay,
     };
 
     setDietLogs((prev) => {
@@ -146,10 +188,19 @@ export function DietaTab() {
       protein: Number(newFoodProtein) || 0,
       carbs: Number(newFoodCarbs) || 0,
       fat: Number(newFoodFat) || 0,
+      unitWeightGrams: newFoodUnitWeight ? Number(newFoodUnitWeight) : undefined,
+      unitName: newFoodUnitName.trim() || undefined,
     };
 
     setCustomFoods((prev) => [created, ...prev]);
     setSelectedFood(created);
+    if (created.unitWeightGrams) {
+      setPortionMode('unit');
+      setPortionGrams(created.unitWeightGrams);
+    } else {
+      setPortionMode('grams');
+      setPortionGrams(100);
+    }
     setIsCustomFoodModalOpen(false);
     // Limpar formulário
     setNewFoodName('');
@@ -157,6 +208,8 @@ export function DietaTab() {
     setNewFoodProtein(20);
     setNewFoodCarbs(10);
     setNewFoodFat(5);
+    setNewFoodUnitWeight('');
+    setNewFoodUnitName('');
   };
 
   const handleRemoveFood = (foodId: string) => {
@@ -315,7 +368,14 @@ export function DietaTab() {
                       <div>
                         <span className="font-semibold text-[var(--text-primary)] block">{item.foodName}</span>
                         <span className="text-[10px] text-[var(--text-muted)] tabular-nums">
-                          {item.grams}g • {Math.round(item.calories)} kcal (P: {item.protein}g | C: {item.carbs}g | G:{' '}
+                          {item.unitDisplay ? (
+                            <strong className="text-[var(--brand-primary)] font-bold mr-1">
+                              {item.unitDisplay} ({item.grams}g)
+                            </strong>
+                          ) : (
+                            `${item.grams}g`
+                          )}{' '}
+                          • {Math.round(item.calories)} kcal (P: {item.protein}g | C: {item.carbs}g | G:{' '}
                           {item.fat}g)
                         </span>
                       </div>
@@ -419,7 +479,7 @@ export function DietaTab() {
                   return (
                     <button
                       key={food.id}
-                      onClick={() => setSelectedFood(food)}
+                      onClick={() => handleSelectFood(food)}
                       className={`w-full text-left p-2.5 rounded-xl text-xs transition-all border flex flex-col gap-1 ${
                         isSelected
                           ? 'bg-[var(--brand-primary)]/15 border-[var(--brand-primary)] font-bold text-[var(--text-primary)] shadow-xs'
@@ -435,9 +495,24 @@ export function DietaTab() {
                             </span>
                           )}
                         </div>
-                        <span className="text-[11px] text-[var(--brand-primary)] font-black tabular-nums ml-2 whitespace-nowrap">
-                          {food.calories} kcal/100g
-                        </span>
+
+                        {/* Calorias por Unidade ou por 100g */}
+                        <div className="text-right shrink-0 ml-2">
+                          {food.unitWeightGrams && food.unitName ? (
+                            <div className="flex flex-col items-end">
+                              <span className="text-[11px] text-[var(--brand-primary)] font-black tabular-nums whitespace-nowrap">
+                                {Math.round((food.calories * food.unitWeightGrams) / 100)} kcal / {food.unitName}
+                              </span>
+                              <span className="text-[9px] text-[var(--text-faint)] tabular-nums whitespace-nowrap">
+                                ({food.calories} kcal/100g)
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-[11px] text-[var(--brand-primary)] font-black tabular-nums whitespace-nowrap">
+                              {food.calories} kcal/100g
+                            </span>
+                          )}
+                        </div>
                       </div>
 
                       <div className="flex items-center gap-2 text-[10px] text-[var(--text-muted)] font-normal">
@@ -465,58 +540,196 @@ export function DietaTab() {
               )}
             </div>
 
-            {/* Controle de Gramas Inteligente */}
+            {/* Controle de Quantidade: Unidades ou Gramas Inteligente */}
             <div className="bg-[var(--surface-subtle)] p-3 rounded-2xl border border-[var(--border)] mb-3">
+              {/* Alternador de Modo de Porção (se o alimento tiver unidade definida) */}
+              {selectedFood.unitWeightGrams && selectedFood.unitName && (
+                <div className="flex items-center justify-between mb-2 pb-2 border-b border-[var(--border)]">
+                  <span className="text-[11px] font-bold text-[var(--text-muted)]">
+                    Modo de medição:
+                  </span>
+                  <div className="flex rounded-xl bg-[var(--surface)] p-0.5 border border-[var(--border)]">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPortionMode('unit');
+                        if (selectedFood.unitWeightGrams) {
+                          setPortionGrams(selectedFood.unitWeightGrams);
+                        }
+                      }}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                        portionMode === 'unit'
+                          ? 'bg-[var(--brand-primary)] text-white shadow-xs'
+                          : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                      }`}
+                    >
+                      Unidades ({selectedFood.unitName})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPortionMode('grams')}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                        portionMode === 'grams'
+                          ? 'bg-[var(--brand-primary)] text-white shadow-xs'
+                          : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                      }`}
+                    >
+                      Balança (g)
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Stepper Principal */}
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-[var(--text-primary)]">Quantidade em gramas:</span>
+                <span className="text-xs font-bold text-[var(--text-primary)]">
+                  {portionMode === 'unit' && selectedFood.unitWeightGrams && selectedFood.unitName
+                    ? `Quantidade em ${selectedFood.unitName}s:`
+                    : 'Quantidade em gramas:'}
+                </span>
+
                 <div className="flex items-center gap-1.5">
-                  <button
-                    onClick={() => setPortionGrams((prev) => Math.max(10, prev - 10))}
-                    className="w-7 h-7 rounded-lg bg-[var(--surface)] border border-[var(--border)] text-xs font-bold flex items-center justify-center hover:bg-[var(--border)]"
-                  >
-                    -
-                  </button>
-                  <input
-                    type="number"
-                    value={portionGrams || ''}
-                    onChange={(e) => setPortionGrams(Math.max(1, Number(e.target.value)))}
-                    className="w-16 text-center py-1 rounded-lg bg-[var(--surface)] border border-[var(--border)] text-xs font-black tabular-nums text-[var(--brand-primary)]"
-                  />
-                  <span className="text-xs font-bold text-[var(--text-muted)]">g</span>
-                  <button
-                    onClick={() => setPortionGrams((prev) => prev + 10)}
-                    className="w-7 h-7 rounded-lg bg-[var(--surface)] border border-[var(--border)] text-xs font-bold flex items-center justify-center hover:bg-[var(--border)]"
-                  >
-                    +
-                  </button>
+                  {portionMode === 'unit' && selectedFood.unitWeightGrams && selectedFood.unitName ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setPortionGrams((prev) =>
+                            Math.max(selectedFood.unitWeightGrams!, prev - selectedFood.unitWeightGrams!)
+                          )
+                        }
+                        className="w-8 h-8 rounded-xl bg-[var(--surface)] border border-[var(--border)] text-sm font-black flex items-center justify-center hover:bg-[var(--border)] active:scale-95"
+                      >
+                        -
+                      </button>
+                      <div className="px-3 py-1 rounded-xl bg-[var(--surface)] border border-[var(--border)] text-xs font-black tabular-nums text-[var(--brand-primary)] min-w-[70px] text-center">
+                        {Math.round(portionGrams / selectedFood.unitWeightGrams)}{' '}
+                        {Math.round(portionGrams / selectedFood.unitWeightGrams) > 1
+                          ? selectedFood.unitName === 'ovo'
+                            ? 'ovos'
+                            : selectedFood.unitName === 'fatia'
+                            ? 'fatias'
+                            : selectedFood.unitName === 'colher'
+                            ? 'colheres'
+                            : `${selectedFood.unitName}s`
+                          : selectedFood.unitName}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setPortionGrams((prev) => prev + selectedFood.unitWeightGrams!)}
+                        className="w-8 h-8 rounded-xl bg-[var(--surface)] border border-[var(--border)] text-sm font-black flex items-center justify-center hover:bg-[var(--border)] active:scale-95"
+                      >
+                        +
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => setPortionGrams((prev) => Math.max(10, prev - 10))}
+                        className="w-8 h-8 rounded-xl bg-[var(--surface)] border border-[var(--border)] text-sm font-black flex items-center justify-center hover:bg-[var(--border)] active:scale-95"
+                      >
+                        -
+                      </button>
+                      <input
+                        type="number"
+                        value={portionGrams || ''}
+                        onChange={(e) => setPortionGrams(Math.max(1, Number(e.target.value)))}
+                        className="w-16 text-center py-1 rounded-xl bg-[var(--surface)] border border-[var(--border)] text-xs font-black tabular-nums text-[var(--brand-primary)]"
+                      />
+                      <span className="text-xs font-bold text-[var(--text-muted)]">g</span>
+                      <button
+                        type="button"
+                        onClick={() => setPortionGrams((prev) => prev + 10)}
+                        className="w-8 h-8 rounded-xl bg-[var(--surface)] border border-[var(--border)] text-sm font-black flex items-center justify-center hover:bg-[var(--border)] active:scale-95"
+                      >
+                        +
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
 
-              {/* Botões rápidos de porção */}
-              <div className="grid grid-cols-6 gap-1 mb-2">
-                {[30, 50, 100, 150, 200, 300].map((g) => (
-                  <button
-                    key={g}
-                    onClick={() => setPortionGrams(g)}
-                    className={`text-[11px] py-1.5 rounded-lg border font-bold transition-all ${
-                      portionGrams === g
-                        ? 'bg-[var(--brand-primary)] text-white border-[var(--brand-primary)] shadow-xs'
-                        : 'bg-[var(--surface)] border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'
-                    }`}
-                  >
-                    {g}g
-                  </button>
-                ))}
-              </div>
+              {/* Botões Rápidos */}
+              {portionMode === 'unit' && selectedFood.unitWeightGrams && selectedFood.unitName ? (
+                <div className="grid grid-cols-4 sm:grid-cols-5 gap-1.5 mb-2">
+                  {[1, 2, 3, 4, 5].map((u) => {
+                    const targetGrams = u * selectedFood.unitWeightGrams!;
+                    const isCurrent = Math.round(portionGrams / selectedFood.unitWeightGrams!) === u;
+                    const pluralName =
+                      u > 1
+                        ? selectedFood.unitName === 'ovo'
+                          ? 'ovos'
+                          : selectedFood.unitName === 'fatia'
+                          ? 'fatias'
+                          : selectedFood.unitName === 'colher'
+                          ? 'colheres'
+                          : `${selectedFood.unitName}s`
+                        : selectedFood.unitName;
+
+                    return (
+                      <button
+                        key={u}
+                        type="button"
+                        onClick={() => setPortionGrams(targetGrams)}
+                        className={`text-[11px] py-1.5 px-1 rounded-xl border font-bold transition-all text-center flex flex-col items-center justify-center ${
+                          isCurrent
+                            ? 'bg-[var(--brand-primary)] text-white border-[var(--brand-primary)] shadow-xs'
+                            : 'bg-[var(--surface)] border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                        }`}
+                      >
+                        <span>
+                          {u} {pluralName}
+                        </span>
+                        <span className={`text-[9px] ${isCurrent ? 'text-white/80' : 'text-[var(--text-faint)]'}`}>
+                          ({targetGrams}g)
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="grid grid-cols-6 gap-1 mb-2">
+                  {[30, 50, 100, 150, 200, 300].map((g) => (
+                    <button
+                      key={g}
+                      type="button"
+                      onClick={() => setPortionGrams(g)}
+                      className={`text-[11px] py-1.5 rounded-lg border font-bold transition-all ${
+                        portionGrams === g
+                          ? 'bg-[var(--brand-primary)] text-white border-[var(--brand-primary)] shadow-xs'
+                          : 'bg-[var(--surface)] border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                      }`}
+                    >
+                      {g}g
+                    </button>
+                  ))}
+                </div>
+              )}
 
               {/* Resumo do que será adicionado */}
-              <div className="text-[11px] text-[var(--text-muted)] pt-2 border-t border-[var(--border)] flex justify-between font-semibold">
+              <div className="text-[11px] text-[var(--text-muted)] pt-2 border-t border-[var(--border)] flex justify-between font-semibold items-center">
                 <span>
-                  Total: <strong className="text-[var(--text-primary)] tabular-nums">{selectedFoodMacros.calories} kcal</strong>
+                  Total:{' '}
+                  <strong className="text-[var(--text-primary)] tabular-nums">{selectedFoodMacros.calories} kcal</strong>
+                  {selectedFood.unitWeightGrams && selectedFood.unitName && (
+                    <span className="text-[10px] text-[var(--text-faint)] ml-1">
+                      ({Math.round((portionGrams / selectedFood.unitWeightGrams) * 10) / 10} {selectedFood.unitName} •{' '}
+                      {portionGrams}g)
+                    </span>
+                  )}
                 </span>
-                <span>P: <strong className="text-blue-500 tabular-nums">{selectedFoodMacros.protein}g</strong></span>
-                <span>C: <strong className="text-amber-500 tabular-nums">{selectedFoodMacros.carbs}g</strong></span>
-                <span>G: <strong className="text-rose-500 tabular-nums">{selectedFoodMacros.fat}g</strong></span>
+                <div className="flex items-center gap-2">
+                  <span>
+                    P: <strong className="text-blue-500 tabular-nums">{selectedFoodMacros.protein}g</strong>
+                  </span>
+                  <span>
+                    C: <strong className="text-amber-500 tabular-nums">{selectedFoodMacros.carbs}g</strong>
+                  </span>
+                  <span>
+                    G: <strong className="text-rose-500 tabular-nums">{selectedFoodMacros.fat}g</strong>
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -635,6 +848,35 @@ export function DietaTab() {
                   onChange={(e) => setNewFoodFat(Number(e.target.value))}
                   className="w-full p-2 rounded-xl bg-[var(--surface-subtle)] border border-[var(--border)] text-xs font-bold text-[var(--text-primary)]"
                 />
+              </div>
+            </div>
+
+            {/* Medição por Unidade (Opcional) */}
+            <div className="pt-2 border-t border-[var(--border)]">
+              <span className="text-[10px] text-[var(--text-faint)] font-bold block mb-1.5 uppercase tracking-wider">
+                Medição por Unidade (Opcional):
+              </span>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[10px] text-[var(--text-muted)] block mb-1 font-semibold">Peso de 1 unid (g):</label>
+                  <input
+                    type="number"
+                    value={newFoodUnitWeight}
+                    onChange={(e) => setNewFoodUnitWeight(e.target.value ? Number(e.target.value) : '')}
+                    placeholder="Ex: 50 (ovo), 30 (scoop)"
+                    className="w-full p-2 rounded-xl bg-[var(--surface-subtle)] border border-[var(--border)] text-xs font-bold text-[var(--text-primary)]"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] text-[var(--text-muted)] block mb-1 font-semibold">Nome da unidade:</label>
+                  <input
+                    type="text"
+                    value={newFoodUnitName}
+                    onChange={(e) => setNewFoodUnitName(e.target.value)}
+                    placeholder="Ex: ovo, fatia, scoop"
+                    className="w-full p-2 rounded-xl bg-[var(--surface-subtle)] border border-[var(--border)] text-xs font-bold text-[var(--text-primary)]"
+                  />
+                </div>
               </div>
             </div>
 

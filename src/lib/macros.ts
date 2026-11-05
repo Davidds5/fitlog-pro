@@ -28,6 +28,8 @@ export interface FoodItem {
   protein: number;
   carbs: number;
   fat: number;
+  unitWeightGrams?: number; // Ex: 50g para 1 ovo, 30g para 1 scoop
+  unitName?: string; // Ex: 'ovo', 'unid', 'scoop', 'fatia', 'colher'
 }
 
 export interface CalculatedFoodPortion {
