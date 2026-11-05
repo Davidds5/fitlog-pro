@@ -1,24 +1,25 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 /**
  * Hook reativo para LocalStorage seguro para Next.js (SSR friendly)
- * e com sincronização instantânea na mesma janela ou entre abas.
+ * e livre de loops infinitos de renderização (Maximum update depth exceeded).
  */
 export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T | ((prev: T) => T)) => void, boolean] {
+  const initialValueRef = useRef<T>(initialValue);
   const [storedValue, setStoredValue] = useState<T>(initialValue);
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
 
-  // Carrega o valor inicial no cliente
+  // Carrega do localStorage apenas uma vez na montagem do componente no client
   useEffect(() => {
     try {
       if (typeof window !== 'undefined') {
         const item = window.localStorage.getItem(key);
-        if (item) {
+        if (item !== null) {
           setStoredValue(JSON.parse(item));
         } else {
-          window.localStorage.setItem(key, JSON.stringify(initialValue));
+          window.localStorage.setItem(key, JSON.stringify(initialValueRef.current));
         }
       }
     } catch (error) {
@@ -26,9 +27,9 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T 
     } finally {
       setIsLoaded(true);
     }
-  }, [key, initialValue]);
+  }, [key]); // Depende unicamente da chave, evitando loops com referências de objetos/arrays
 
-  // Atualizador com emissão de evento customizado para reatividade interna
+  // Atualizador estável
   const setValue = useCallback(
     (value: T | ((prev: T) => T)) => {
       try {
@@ -36,7 +37,6 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T 
           const valueToStore = value instanceof Function ? value(currentValue) : value;
           if (typeof window !== 'undefined') {
             window.localStorage.setItem(key, JSON.stringify(valueToStore));
-            // Dispara evento para sincronizar componentes na mesma aba
             window.dispatchEvent(new CustomEvent(`local-storage-${key}`, { detail: valueToStore }));
           }
           return valueToStore;
@@ -48,7 +48,7 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T 
     [key]
   );
 
-  // Escuta mudanças de outros componentes
+  // Sincronização entre abas e componentes
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
@@ -64,7 +64,7 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T 
         try {
           setStoredValue(JSON.parse(e.newValue));
         } catch {
-          // ignora erro de parse
+          // ignora
         }
       }
     };
@@ -83,7 +83,7 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T 
 
 export interface SetLogEntry {
   id: string;
-  date: string; // YYYY-MM-DD
+  date: string;
   exerciseId: string;
   exerciseName: string;
   serieNumber: number;
@@ -94,7 +94,7 @@ export interface SetLogEntry {
 }
 
 export interface DailyDietLog {
-  date: string; // YYYY-MM-DD
+  date: string;
   meals: {
     id: string;
     mealType: 'cafe' | 'almoco' | 'lanche' | 'jantar' | 'pos_treino';
@@ -106,4 +106,3 @@ export interface DailyDietLog {
     fat: number;
   }[];
 }
-

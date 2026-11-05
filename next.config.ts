@@ -6,7 +6,7 @@ const cspHeader = `
   style-src 'self' 'unsafe-inline';
   font-src 'self' data:;
   img-src 'self' data: blob:;
-  connect-src 'self';
+  connect-src 'self' ws: wss: http: https:;
   object-src 'none';
   base-uri 'self';
   form-action 'self';
@@ -18,6 +18,11 @@ const cspHeader = `
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   async headers() {
+    // Em desenvolvimento, não aplicamos headers que quebrem o HMR do Turbopack
+    if (process.env.NODE_ENV !== 'production') {
+      return [];
+    }
+
     return [
       {
         source: '/(.*)',
