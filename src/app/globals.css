@@ -1,4 +1,6 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
   /* ==========================================================================
@@ -75,7 +77,7 @@ body {
   font-feature-settings: "tnum" 1;
 }
 
-/* BOTÃO PRIMÁRIO TÁTIL (Deslocamento físico + sombra offset sólida profunda) */
+/* BOTÃO PRIMÁRIO TÁTIL */
 .btn-tactile {
   display: inline-flex;
   align-items: center;
@@ -106,7 +108,7 @@ body {
   box-shadow: 0 1px 0 var(--btn-shadow);
 }
 
-/* BOTÃO SECUNDÁRIO / CHIPS TÁTEIS (Fundo claro/mineral + elevação e sombra tátil) */
+/* BOTÃO SECUNDÁRIO / CHIPS TÁTEIS */
 .btn-secondary-tactile {
   display: inline-flex;
   align-items: center;
@@ -139,7 +141,7 @@ body {
   box-shadow: 0 1px 0 var(--btn-secondary-shadow);
 }
 
-/* BOTÃO DE SUCESSO TÁTIL (Verde contábil/conclusão) */
+/* BOTÃO DE SUCESSO TÁTIL */
 .btn-success-tactile {
   display: inline-flex;
   align-items: center;
@@ -169,7 +171,7 @@ body {
   box-shadow: 0 1px 0 #0D5025;
 }
 
-/* CARDS CLICÁVEIS INTERATIVOS NO PADRÃO CLOVIN */
+/* CARDS CLICÁVEIS */
 .interactive-card {
   background-color: var(--surface);
   border: 1px solid var(--border);
@@ -183,14 +185,4 @@ body {
   transform: translateY(-2px);
   box-shadow: 0 8px 20px -4px rgba(45, 25, 15, 0.08);
   border-color: var(--brand-primary);
-}
-
-/* Scrollbars limpos */
-::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
-}
-::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 4px;
 }
