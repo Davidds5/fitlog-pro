@@ -4,7 +4,14 @@ import React, { useState } from 'react';
 import defaultFichas from '@/data/fichas.json';
 import defaultExercicios from '@/data/exercicios.json';
 import { useLocalStorage, SetLogEntry } from '@/lib/storage';
-import { PeriodizationPhase, calculate1RM, getPhaseSeriesConfig } from '@/lib/pyramid';
+import {
+  PeriodizationPhase,
+  calculate1RM,
+  getPhaseSeriesConfig,
+  recalculateSeriesForPhase,
+  isRepsOutOfRange,
+  ExerciseSerie,
+} from '@/lib/pyramid';
 import { RestTimerModal } from './RestTimerModal';
 import {
   Flame,
@@ -16,15 +23,8 @@ import {
   TrendingUp,
   History,
   Check,
+  AlertCircle,
 } from 'lucide-react';
-
-export interface ExerciseSerie {
-  id: string;
-  serieNumber: number;
-  weight: number;
-  reps: number;
-  completed: boolean;
-}
 
 export interface WorkoutExercise {
   id: string;
@@ -58,7 +58,7 @@ export function TreinoTab() {
 
   const activeFicha = fichas.find((f) => f.id === activeFichaId) || fichas[0];
 
-  // Último registro do exercício
+  // Helper para buscar último registro do exercício no histórico
   const getLastPerformance = (exerciseId: string) => {
     const logs = history.filter((h) => h.exerciseId === exerciseId);
     if (!logs.length) return null;
@@ -153,11 +153,22 @@ export function TreinoTab() {
     }
   };
 
+  // Trocar de fase com recálculo inteligente (não sobrescreve concluídas)
   const changePhase = (newPhase: PeriodizationPhase) => {
     setFichas((prev) =>
       prev.map((ficha) => {
         if (ficha.id !== activeFicha.id) return ficha;
-        return { ...ficha, phase: newPhase };
+        return {
+          ...ficha,
+          phase: newPhase,
+          exercises: ficha.exercises.map((ex) => {
+            const lastLog = getLastPerformance(ex.exerciseId);
+            return {
+              ...ex,
+              series: recalculateSeriesForPhase(ex.series, newPhase, lastLog),
+            };
+          }),
+        };
       })
     );
   };
@@ -181,17 +192,24 @@ export function TreinoTab() {
     const baseEx = defaultExercicios.find((e) => e.id === selectedExToAdd);
     if (!baseEx) return;
 
+    const lastLog = getLastPerformance(baseEx.id);
+    const configs = getPhaseSeriesConfig(activeFicha.phase || 'piramide');
+    const oneRM = lastLog && lastLog.weight > 0 ? (lastLog.oneRM > 0 ? lastLog.oneRM : calculate1RM(lastLog.weight, lastLog.reps)) : 0;
+
+    const initialSeries: ExerciseSerie[] = configs.map((cfg, idx) => ({
+      id: `s-${idx + 1}-${Date.now()}`,
+      serieNumber: cfg.serieNumber,
+      weight: oneRM > 0 ? Math.round(oneRM * cfg.percentageOfMax) : 0,
+      reps: cfg.defaultReps,
+      completed: false,
+    }));
+
     const newEx: WorkoutExercise = {
       id: `ex-${Date.now()}`,
       exerciseId: baseEx.id,
       name: baseEx.name,
       muscleGroup: baseEx.muscleGroup,
-      series: [
-        { id: `s-1-${Date.now()}`, serieNumber: 1, weight: 20, reps: 15, completed: false },
-        { id: `s-2-${Date.now()}`, serieNumber: 2, weight: 24, reps: 12, completed: false },
-        { id: `s-3-${Date.now()}`, serieNumber: 3, weight: 28, reps: 10, completed: false },
-        { id: `s-4-${Date.now()}`, serieNumber: 4, weight: 32, reps: 8, completed: false },
-      ],
+      series: initialSeries,
     };
 
     setFichas((prev) =>
@@ -216,7 +234,7 @@ export function TreinoTab() {
   const phaseConfig = getPhaseSeriesConfig(activeFicha.phase || 'piramide');
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 max-w-md mx-auto">
       {/* 1. SELETOR DE FICHA ABC EM 3 BOTÕES TÁTEIS EQUILIBRADOS */}
       <div className="grid grid-cols-3 gap-2">
         {fichas.map((ficha) => {
@@ -247,7 +265,7 @@ export function TreinoTab() {
           <button
             onClick={resetWorkoutCompletion}
             title="Resetar séries para novo treino"
-            className="btn-secondary-tactile p-2 min-h-[38px] min-w-[38px] rounded-xl text-[var(--text-muted)] hover:text-[var(--brand-primary)]"
+            className="btn-secondary-tactile p-2 min-h-[44px] min-w-[44px] rounded-xl text-[var(--text-muted)] hover:text-[var(--brand-primary)]"
           >
             <RotateCcw className="w-4 h-4" />
           </button>
@@ -321,41 +339,42 @@ export function TreinoTab() {
                     <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-semibold mt-1">
                       <History className="w-3.5 h-3.5" />
                       <span>
-                        Última vez: <strong className="tabular-nums">{lastLog.weight}kg</strong> ×{' '}
-                        <strong className="tabular-nums">{lastLog.reps} reps</strong> (1RM ~{lastLog.oneRM}kg)
+                        Última vez: <strong className="tabular-nums font-mono">{lastLog.weight}kg</strong> ×{' '}
+                        <strong className="tabular-nums font-mono">{lastLog.reps} reps</strong> (1RM ~{lastLog.oneRM}kg)
                       </span>
                     </div>
                   ) : (
-                    <span className="text-[11px] text-[var(--text-faint)] mt-0.5 block">Nenhum log anterior gravado</span>
+                    <span className="text-[11px] text-[var(--text-faint)] mt-0.5 block">Sem treino anterior registrado</span>
                   )}
                 </div>
 
                 <button
                   onClick={() => removeExercise(exercise.id)}
                   title="Remover exercício da ficha"
-                  className="p-2 text-[var(--text-muted)] hover:text-red-500 rounded-xl hover:bg-[var(--surface-subtle)] transition-colors"
+                  className="p-2 text-[var(--text-muted)] hover:text-red-500 rounded-xl hover:bg-[var(--surface-subtle)] transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
 
-              {/* LISTA DE SÉRIES - LAYOUT BULLET-PROOF 2 LINHAS (ZERO BUGS DE CORTE) */}
-              <div className="space-y-2.5">
+              {/* LISTA DE SÉRIES - LAYOUT BULLET-PROOF RESPONSIVO */}
+              <div className="space-y-3">
                 {exercise.series.map((serie, sIndex) => {
                   const targetConfig = phaseConfig[sIndex] || phaseConfig[phaseConfig.length - 1];
                   const current1RM = calculate1RM(serie.weight, serie.reps);
+                  const isOutOfRange = isRepsOutOfRange(serie.reps, targetConfig.minReps, targetConfig.maxReps);
 
                   return (
                     <div
                       key={serie.id}
-                      className={`p-3 rounded-2xl border transition-all ${
+                      className={`p-3.5 rounded-2xl border transition-all ${
                         serie.completed
                           ? 'bg-emerald-500/10 border-emerald-500/40'
                           : 'bg-[var(--surface-subtle)]/70 border-[var(--border)]'
                       }`}
                     >
-                      {/* LINHA 1: NÚMERO DA SÉRIE, META E 1RM */}
-                      <div className="flex items-center justify-between pb-2 mb-2 border-b border-[var(--border)]">
+                      {/* LINHA 1: IDENTIFICAÇÃO, META E 1RM */}
+                      <div className="flex items-center justify-between pb-2.5 mb-2.5 border-b border-[var(--border)]">
                         <div className="flex items-center gap-2">
                           <span
                             className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-black ${
@@ -367,93 +386,116 @@ export function TreinoTab() {
                           <span className="text-xs font-bold text-[var(--text-primary)] whitespace-nowrap">
                             Meta: {targetConfig.targetReps} reps
                           </span>
-                          <span className="text-[10px] text-[var(--text-muted)] font-medium">
-                            ({targetConfig.intensityLabel})
-                          </span>
+                          
+                          {/* Alerta discreto se o usuário ajustou reps fora da meta */}
+                          {isOutOfRange && (
+                            <span
+                              title="Repetições fora da meta da fase"
+                              className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30"
+                            >
+                              <AlertCircle className="w-3 h-3" />
+                              Fora da faixa
+                            </span>
+                          )}
                         </div>
 
                         <div className="flex items-center gap-1 text-[11px] text-[var(--brand-primary)] font-bold whitespace-nowrap">
                           <TrendingUp className="w-3.5 h-3.5" />
-                          <span>1RM: ~{current1RM}kg</span>
+                          <span className="tabular-nums font-mono">1RM: ~{current1RM}kg</span>
                         </div>
                       </div>
 
-                      {/* LINHA 2: CONTROLES DE PESO + REPETIÇÕES + BOTÃO CONCLUIR */}
-                      <div className="flex items-center justify-between gap-1.5">
-                        {/* Seletor de Carga (kg) */}
-                        <div className="flex items-center gap-0.5 bg-[var(--surface)] p-1 rounded-xl border border-[var(--border)] shadow-2xs">
-                          <button
-                            onClick={() => updateSerieWeight(exercise.id, serie.id, -2.5)}
-                            className="px-1.5 py-1 text-[10px] font-bold text-[var(--text-muted)] hover:text-[var(--text-primary)] rounded-md hover:bg-[var(--surface-subtle)]"
-                            title="-2.5kg"
-                          >
-                            -2.5
-                          </button>
-                          <button
-                            onClick={() => updateSerieWeight(exercise.id, serie.id, -1)}
-                            className="px-1.5 py-1 text-xs font-bold text-[var(--text-muted)] hover:text-[var(--text-primary)] rounded-md hover:bg-[var(--surface-subtle)]"
-                            title="-1kg"
-                          >
-                            -1
-                          </button>
+                      {/* LINHA 2: CONTROLES DE CARGA + REPETIÇÕES (ÁREA DE TOQUE 48x48px) + BOTÃO CONCLUIR */}
+                      <div className="space-y-2.5">
+                        <div className="grid grid-cols-2 gap-2">
+                          {/* Stepper de Carga (kg) */}
+                          <div className="flex items-center justify-between bg-[var(--surface)] p-1 rounded-2xl border border-[var(--border)] shadow-2xs">
+                            <button
+                              type="button"
+                              onClick={() => updateSerieWeight(exercise.id, serie.id, -2.5)}
+                              className="min-w-[40px] min-h-[44px] px-1 text-[11px] font-bold text-[var(--text-muted)] hover:text-[var(--text-primary)] rounded-xl hover:bg-[var(--surface-subtle)] active:scale-95 transition-all flex items-center justify-center select-none"
+                              title="-2.5kg"
+                            >
+                              -2.5
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => updateSerieWeight(exercise.id, serie.id, -1)}
+                              className="min-w-[36px] min-h-[44px] px-1 text-xs font-bold text-[var(--text-muted)] hover:text-[var(--text-primary)] rounded-xl hover:bg-[var(--surface-subtle)] active:scale-95 transition-all flex items-center justify-center select-none"
+                              title="-1kg"
+                            >
+                              -1
+                            </button>
 
-                          <div className="px-1.5 text-center min-w-[46px]">
-                            <span className="text-sm font-black tabular-nums text-[var(--brand-primary)] block leading-tight">
-                              {serie.weight}
-                            </span>
-                            <span className="text-[9px] text-[var(--text-faint)] font-bold -mt-0.5 block">kg</span>
+                            <div className="text-center px-1">
+                              <span className="text-base font-black tabular-nums font-mono text-[var(--brand-primary)] block leading-tight">
+                                {serie.weight}
+                              </span>
+                              <span className="text-[9px] text-[var(--text-faint)] font-bold -mt-0.5 block">kg</span>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => updateSerieWeight(exercise.id, serie.id, 1)}
+                              className="min-w-[36px] min-h-[44px] px-1 text-xs font-bold text-[var(--text-muted)] hover:text-[var(--text-primary)] rounded-xl hover:bg-[var(--surface-subtle)] active:scale-95 transition-all flex items-center justify-center select-none"
+                              title="+1kg"
+                            >
+                              +1
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => updateSerieWeight(exercise.id, serie.id, 2.5)}
+                              className="min-w-[40px] min-h-[44px] px-1 text-[11px] font-bold text-[var(--text-muted)] hover:text-[var(--text-primary)] rounded-xl hover:bg-[var(--surface-subtle)] active:scale-95 transition-all flex items-center justify-center select-none"
+                              title="+2.5kg"
+                            >
+                              +2.5
+                            </button>
                           </div>
 
-                          <button
-                            onClick={() => updateSerieWeight(exercise.id, serie.id, 1)}
-                            className="px-1.5 py-1 text-xs font-bold text-[var(--text-muted)] hover:text-[var(--text-primary)] rounded-md hover:bg-[var(--surface-subtle)]"
-                            title="+1kg"
-                          >
-                            +1
-                          </button>
-                          <button
-                            onClick={() => updateSerieWeight(exercise.id, serie.id, 2.5)}
-                            className="px-1.5 py-1 text-[10px] font-bold text-[var(--text-muted)] hover:text-[var(--text-primary)] rounded-md hover:bg-[var(--surface-subtle)]"
-                            title="+2.5kg"
-                          >
-                            +2.5
-                          </button>
-                        </div>
+                          {/* Stepper de Repetições (Botões amplos 48x48px com espaçamento) */}
+                          <div className="flex items-center justify-between bg-[var(--surface)] p-1 rounded-2xl border border-[var(--border)] shadow-2xs">
+                            <button
+                              type="button"
+                              onClick={() => updateSerieReps(exercise.id, serie.id, -1)}
+                              className="min-w-[48px] min-h-[48px] text-lg font-black text-[var(--text-muted)] hover:text-[var(--text-primary)] rounded-xl hover:bg-[var(--surface-subtle)] active:scale-95 transition-all flex items-center justify-center select-none"
+                            >
+                              -
+                            </button>
 
-                        {/* Seletor de Repetições */}
-                        <div className="flex items-center gap-0.5 bg-[var(--surface)] p-1 rounded-xl border border-[var(--border)] shadow-2xs">
-                          <button
-                            onClick={() => updateSerieReps(exercise.id, serie.id, -1)}
-                            className="w-6 h-7 text-xs font-bold text-[var(--text-muted)] hover:text-[var(--text-primary)] rounded-md hover:bg-[var(--surface-subtle)] flex items-center justify-center"
-                          >
-                            -
-                          </button>
-                          <div className="px-1 text-center min-w-[34px]">
-                            <span className="text-sm font-black tabular-nums text-[var(--text-primary)] block leading-tight">
-                              {serie.reps}
-                            </span>
-                            <span className="text-[9px] text-[var(--text-faint)] font-bold -mt-0.5 block">reps</span>
+                            <div className="text-center px-1">
+                              <span className="text-base font-black tabular-nums font-mono text-[var(--text-primary)] block leading-tight">
+                                {serie.reps}
+                              </span>
+                              <span className="text-[9px] text-[var(--text-faint)] font-bold -mt-0.5 block">reps</span>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => updateSerieReps(exercise.id, serie.id, 1)}
+                              className="min-w-[48px] min-h-[48px] text-lg font-black text-[var(--text-muted)] hover:text-[var(--text-primary)] rounded-xl hover:bg-[var(--surface-subtle)] active:scale-95 transition-all flex items-center justify-center select-none"
+                            >
+                              +
+                            </button>
                           </div>
-                          <button
-                            onClick={() => updateSerieReps(exercise.id, serie.id, 1)}
-                            className="w-6 h-7 text-xs font-bold text-[var(--text-muted)] hover:text-[var(--text-primary)] rounded-md hover:bg-[var(--surface-subtle)] flex items-center justify-center"
-                          >
-                            +
-                          </button>
                         </div>
 
-                        {/* BOTÃO TÁTIL CONCLUIR SÉRIE (SEMPRE VISÍVEL E CONFORTÁVEL) */}
+                        {/* Botão Concluir Série (Largo, Tátil e Confortável) */}
                         <button
+                          type="button"
                           onClick={() => completeSerie(exercise, serie)}
-                          className={serie.completed ? 'btn-success-tactile min-h-[40px] px-3 text-xs' : 'btn-tactile min-h-[40px] px-3 text-xs'}
+                          className={
+                            serie.completed
+                              ? 'btn-success-tactile w-full min-h-[44px] text-xs font-bold'
+                              : 'btn-tactile w-full min-h-[44px] text-xs font-bold'
+                          }
                         >
                           {serie.completed ? (
-                            <span className="flex items-center gap-1 font-bold">
-                              <Check className="w-4 h-4 stroke-[3]" /> Concluída
+                            <span className="flex items-center justify-center gap-1.5 font-bold">
+                              <Check className="w-4 h-4 stroke-[3]" /> Série Concluída ✓
                             </span>
                           ) : (
-                            <span className="flex items-center gap-1 font-bold">
-                              <CheckCircle2 className="w-4 h-4" /> Concluir
+                            <span className="flex items-center justify-center gap-1.5 font-bold">
+                              <CheckCircle2 className="w-4 h-4" /> Concluir Série
                             </span>
                           )}
                         </button>
@@ -471,7 +513,7 @@ export function TreinoTab() {
       <div className="space-y-2.5 pt-2">
         <button
           onClick={() => setIsAddModalOpen(true)}
-          className="btn-tactile w-full py-3 flex items-center justify-center gap-2 font-bold text-sm"
+          className="btn-tactile w-full py-3.5 flex items-center justify-center gap-2 font-bold text-sm min-h-[48px]"
         >
           <Plus className="w-4 h-4" />
           Adicionar Novo Exercício à Ficha
@@ -482,7 +524,7 @@ export function TreinoTab() {
             setTimerDuration(90);
             setIsTimerOpen(true);
           }}
-          className="btn-secondary-tactile w-full py-2.5 flex items-center justify-center gap-2 text-xs font-bold"
+          className="btn-secondary-tactile w-full py-3 flex items-center justify-center gap-2 text-xs font-bold min-h-[48px]"
         >
           <Clock className="w-4 h-4 text-[var(--brand-primary)]" />
           Abrir Cronômetro de Descanso Manual
@@ -511,13 +553,13 @@ export function TreinoTab() {
             <div className="flex gap-2">
               <button
                 onClick={() => setIsAddModalOpen(false)}
-                className="btn-secondary-tactile flex-1 text-xs py-2.5"
+                className="btn-secondary-tactile flex-1 text-xs py-2.5 min-h-[44px]"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleAddExercise}
-                className="btn-tactile flex-1 text-xs py-2.5"
+                className="btn-tactile flex-1 text-xs py-2.5 min-h-[44px]"
               >
                 Adicionar
               </button>

@@ -16,7 +16,6 @@ import {
   Trash2,
   Search,
   Settings2,
-  Flame,
 } from 'lucide-react';
 
 const DEFAULT_PROFILE: UserProfile = {

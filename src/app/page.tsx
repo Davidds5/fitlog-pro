@@ -50,9 +50,9 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] flex flex-col font-sans transition-colors duration-150">
-      {/* Navbar Clovin Tátil em 3 Zonas Equilibradas */}
-      <header className="sticky top-0 z-30 bg-[var(--surface)]/95 backdrop-blur-md border-b border-[var(--border)] px-4 py-3 shadow-xs">
-        <div className="max-w-lg mx-auto flex items-center justify-between">
+      {/* Navbar Clovin Tátil limitada estritamente a max-w-md no desktop */}
+      <header className="sticky top-0 z-30 bg-[var(--surface)] border-b border-[var(--border)] px-4 py-3 shadow-xs">
+        <div className="max-w-md mx-auto flex items-center justify-between">
           {/* Zona 1: Identidade da Marca */}
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#C85A17] to-[#A25265] flex items-center justify-center text-white font-black shadow-md shadow-[#C85A17]/20">
@@ -97,8 +97,8 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Conteúdo Principal com Espaçamento Amplo (Sem Cortes) */}
-      <main className="flex-1 p-3.5 sm:p-4 max-w-lg mx-auto w-full pb-32">
+      {/* Conteúdo Principal com max-w-md centralizado no desktop */}
+      <main className="flex-1 p-3.5 sm:p-4 max-w-md mx-auto w-full pb-32">
         {activeTab === 'treino' && <TreinoTab />}
         {activeTab === 'dieta' && <DietaTab />}
         {activeTab === 'guia' && <GuiaTab />}
