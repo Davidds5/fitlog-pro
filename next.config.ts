@@ -17,6 +17,7 @@ const cspHeader = `
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  devIndicators: false,
   async headers() {
     // Em desenvolvimento, não aplicamos headers que quebrem o HMR do Turbopack
     if (process.env.NODE_ENV !== 'production') {

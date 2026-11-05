@@ -91,6 +91,54 @@ export function TreinoTab() {
     };
   }, [isWorkoutTimerRunning]);
 
+  // Sanitizador automático para curar IDs duplicados existentes no localStorage
+  useEffect(() => {
+    let hasDuplicates = false;
+    const seenFichaIds = new Set<string>();
+
+    const sanitized = fichas.map((f, fIdx) => {
+      let fId = f.id;
+      if (seenFichaIds.has(fId)) {
+        fId = `${fId}-${fIdx}-${Math.random().toString(36).substring(2, 5)}`;
+        hasDuplicates = true;
+      }
+      seenFichaIds.add(fId);
+
+      const seenExIds = new Set<string>();
+      const sanitizedExercises = f.exercises.map((ex, exIdx) => {
+        let exId = ex.id;
+        if (seenExIds.has(exId)) {
+          exId = `${exId}-${exIdx}-${Math.random().toString(36).substring(2, 5)}`;
+          hasDuplicates = true;
+        }
+        seenExIds.add(exId);
+
+        const seenSIds = new Set<string>();
+        const sanitizedSeries = ex.series.map((s, sIdx) => {
+          let sId = s.id;
+          if (seenSIds.has(sId)) {
+            sId = `${sId}-${sIdx}-${Math.random().toString(36).substring(2, 5)}`;
+            hasDuplicates = true;
+          }
+          seenSIds.add(sId);
+          return sId === s.id ? s : { ...s, id: sId };
+        });
+
+        return exId === ex.id && sanitizedSeries === ex.series
+          ? ex
+          : { ...ex, id: exId, series: sanitizedSeries };
+      });
+
+      return fId === f.id && sanitizedExercises === f.exercises
+        ? f
+        : { ...f, id: fId, exercises: sanitizedExercises };
+    });
+
+    if (hasDuplicates) {
+      setFichas(sanitized);
+    }
+  }, [fichas, setFichas]);
+
   const activeFicha = fichas.find((f) => f.id === activeFichaId) || fichas[0] || {
     id: 'empty',
     name: 'Nenhum Treino',
@@ -322,7 +370,7 @@ export function TreinoTab() {
     const oneRM = lastLog && lastLog.weight > 0 ? (lastLog.oneRM > 0 ? lastLog.oneRM : calculate1RM(lastLog.weight, lastLog.reps)) : 0;
 
     const initialSeries: ExerciseSerie[] = configs.map((cfg, idx) => ({
-      id: `s-${idx + 1}-${Date.now()}`,
+      id: `s-${idx + 1}-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
       serieNumber: cfg.serieNumber,
       weight: oneRM > 0 ? Math.round(oneRM * cfg.percentageOfMax) : 0,
       reps: cfg.defaultReps,
@@ -330,7 +378,7 @@ export function TreinoTab() {
     }));
 
     const newEx: WorkoutExercise = {
-      id: `ex-${Date.now()}`,
+      id: `ex-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
       exerciseId: baseEx.id,
       name: baseEx.name,
       muscleGroup: baseEx.muscleGroup,
@@ -438,13 +486,13 @@ export function TreinoTab() {
     <div className="space-y-4 max-w-md mx-auto">
       {/* 1. SELETOR DE TREINO: CARROSSEL DE CHIPS HORIZONTAIS + BOTÃO NOVO */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-0.5 no-scrollbar">
-        {fichas.map((ficha) => {
+        {fichas.map((ficha, fIdx) => {
           const isActive = activeFicha.id === ficha.id;
           const isToday = ficha.weekDays && ficha.weekDays.includes(todayDayOfWeek);
 
           return (
             <button
-              key={ficha.id}
+              key={`${ficha.id}-${fIdx}`}
               onClick={() => setActiveFichaId(ficha.id)}
               className={`relative px-3.5 py-2 rounded-2xl text-xs font-black whitespace-nowrap transition-all border shrink-0 min-h-[42px] flex items-center gap-1.5 ${
                 isActive
@@ -614,7 +662,7 @@ export function TreinoTab() {
           const expandedSerieId = expandedSeriesMap[exercise.id] || (activePendingSerie ? activePendingSerie.id : '');
 
           return (
-            <div key={exercise.id} className="interactive-card p-4 shadow-sm">
+            <div key={`${exercise.id}-${exIndex}`} className="interactive-card p-4 shadow-sm">
               {/* Topo do Card de Exercício */}
               <div className="flex items-start justify-between gap-2 mb-2">
                 <div className="flex-1">
@@ -674,7 +722,7 @@ export function TreinoTab() {
                   if (isCollapsed) {
                     return (
                       <div
-                        key={serie.id}
+                        key={`${serie.id}-${sIndex}`}
                         onClick={() =>
                           setExpandedSeriesMap((prev) => ({
                             ...prev,
@@ -705,7 +753,7 @@ export function TreinoTab() {
 
                   return (
                     <div
-                      key={serie.id}
+                      key={`${serie.id}-${sIndex}`}
                       className={`p-3.5 rounded-2xl border transition-all ${
                         serie.completed
                           ? 'bg-emerald-500/10 border-emerald-500/40'

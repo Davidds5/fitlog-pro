@@ -15,7 +15,22 @@ export function WorkoutTemplatesModal({ isOpen, onClose, onApplyTemplate }: Work
   if (!isOpen) return null;
 
   const handleSelect = (tpl: WorkoutTemplate) => {
-    onApplyTemplate(tpl.fichas);
+    // Clona o template gerando novos IDs únicos para evitar colisões no React
+    const clonedFichas: WorkoutFicha[] = tpl.fichas.map((f, fIdx) => ({
+      ...f,
+      id: `ficha-${Date.now()}-${fIdx}-${Math.random().toString(36).substring(2, 6)}`,
+      exercises: f.exercises.map((ex, exIdx) => ({
+        ...ex,
+        id: `ex-${Date.now()}-${fIdx}-${exIdx}-${Math.random().toString(36).substring(2, 6)}`,
+        series: ex.series.map((s, sIdx) => ({
+          ...s,
+          id: `s-${Date.now()}-${fIdx}-${exIdx}-${sIdx}-${Math.random().toString(36).substring(2, 6)}`,
+          completed: false,
+        })),
+      })),
+    }));
+
+    onApplyTemplate(clonedFichas);
     onClose();
   };
 

@@ -60,22 +60,21 @@ export function GuiaTab() {
   const handleAddExerciseToFichas = (targetFichaIds: string[]) => {
     if (!sheetExercise) return;
 
-    const newEx: WorkoutExercise = {
-      id: `ex-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`,
-      exerciseId: sheetExercise.id,
-      name: sheetExercise.name,
-      muscleGroup: sheetExercise.muscleGroup,
-      series: [
-        { id: `s-1-${Date.now()}`, serieNumber: 1, weight: 0, reps: 15, completed: false },
-        { id: `s-2-${Date.now()}`, serieNumber: 2, weight: 0, reps: 14, completed: false },
-        { id: `s-3-${Date.now()}`, serieNumber: 3, weight: 0, reps: 13, completed: false },
-        { id: `s-4-${Date.now()}`, serieNumber: 4, weight: 0, reps: 12, completed: false },
-      ],
-    };
-
     setFichas((prev) =>
-      prev.map((f) => {
+      prev.map((f, fIdx) => {
         if (!targetFichaIds.includes(f.id)) return f;
+        const newEx: WorkoutExercise = {
+          id: `ex-${Date.now()}-${fIdx}-${Math.random().toString(36).substring(2, 6)}`,
+          exerciseId: sheetExercise.id,
+          name: sheetExercise.name,
+          muscleGroup: sheetExercise.muscleGroup,
+          series: [
+            { id: `s-1-${Date.now()}-${fIdx}-${Math.random().toString(36).substring(2, 6)}`, serieNumber: 1, weight: 0, reps: 15, completed: false },
+            { id: `s-2-${Date.now()}-${fIdx}-${Math.random().toString(36).substring(2, 6)}`, serieNumber: 2, weight: 0, reps: 14, completed: false },
+            { id: `s-3-${Date.now()}-${fIdx}-${Math.random().toString(36).substring(2, 6)}`, serieNumber: 3, weight: 0, reps: 13, completed: false },
+            { id: `s-4-${Date.now()}-${fIdx}-${Math.random().toString(36).substring(2, 6)}`, serieNumber: 4, weight: 0, reps: 12, completed: false },
+          ],
+        };
         return { ...f, exercises: [...f.exercises, newEx] };
       })
     );
