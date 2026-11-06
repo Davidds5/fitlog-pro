@@ -261,8 +261,8 @@ export function GuiaTab() {
           })}
         </div>
 
-        {/* Filtro por Equipamento */}
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-2.5">
+        {/* Filtro por Equipamento em Wrap (100% visível, sem cortar Peso Corporal) */}
+        <div className="flex items-center gap-1.5 flex-wrap pt-2.5">
           <span className="text-[10px] font-black uppercase tracking-wider text-[var(--text-faint)] shrink-0">
             Equip:
           </span>
@@ -286,8 +286,16 @@ export function GuiaTab() {
         </div>
 
         {/* Contador de Resultados */}
-        <div className="text-[11px] text-[var(--text-faint)] font-semibold mt-2.5 flex items-center justify-between">
-          <span>{filteredExercises.length} exercícios encontrados</span>
+        <div className="text-[11px] text-[var(--text-faint)] font-semibold mt-2.5 flex items-center justify-between gap-2 flex-wrap">
+          <span>
+            {filteredExercises.length}{' '}
+            {filteredExercises.length === 1 ? 'exercício encontrado' : 'exercícios encontrados'}
+            {selectedMuscle === 'Todos' && groupedExercises.length > 1 && (
+              <span className="text-[var(--text-muted)] font-normal ml-1">
+                ({groupedExercises.map((g) => `${g.title}: ${g.items.length}`).join(' · ')})
+              </span>
+            )}
+          </span>
           <div className="flex items-center gap-2">
             {selectedMuscle !== 'Todos' && <span className="text-[var(--brand-primary)] font-bold">Músculo: {selectedMuscle}</span>}
             {selectedEquipment !== 'Todos' && <span className="text-[var(--brand-primary)] font-bold">Equip: {selectedEquipment}</span>}
