@@ -30,6 +30,8 @@ export const WorkoutExerciseSchema = z.object({
   exerciseId: z.string().max(120),
   name: z.string().min(1).max(120),
   muscleGroup: z.string().max(60),
+  origem: z.enum(['usuario', 'padrao']).default('usuario'),
+  editadoEm: z.string().optional(),
   series: z.array(ExerciseSerieSchema).max(30),
 });
 
@@ -43,6 +45,8 @@ export const WorkoutFichaSchema = z.object({
   color: z.string().max(40).optional(),
   icon: z.string().max(40).optional(),
   weekDays: z.array(z.number().min(0).max(6)).optional(),
+  origem: z.enum(['usuario', 'padrao']).default('usuario'),
+  editadoEm: z.string().optional(),
   exercises: z.array(WorkoutExerciseSchema).max(50),
 });
 

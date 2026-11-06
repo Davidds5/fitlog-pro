@@ -82,6 +82,8 @@ export function WorkoutEditorModal({
       phase: fichaToEdit ? fichaToEdit.phase : 'base',
       color,
       weekDays,
+      origem: 'usuario',
+      editadoEm: new Date().toISOString(),
       exercises: fichaToEdit ? fichaToEdit.exercises : [],
     };
 

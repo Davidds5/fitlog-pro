@@ -44,6 +44,8 @@ export interface WorkoutExercise {
   exerciseId: string;
   name: string;
   muscleGroup: string;
+  origem?: 'usuario' | 'padrao';
+  editadoEm?: string;
   series: ExerciseSerie[];
 }
 
@@ -56,6 +58,8 @@ export interface WorkoutFicha {
   color?: string;
   icon?: string;
   weekDays?: number[]; // 0=Dom, 1=Seg, 2=Ter, 3=Qua, 4=Qui, 5=Sex, 6=Sáb
+  origem?: 'usuario' | 'padrao';
+  editadoEm?: string;
   exercises: WorkoutExercise[];
 }
 

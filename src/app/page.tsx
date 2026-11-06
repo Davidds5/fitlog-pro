@@ -6,6 +6,8 @@ import { DietaTab } from '@/components/DietaTab';
 import { GuiaTab } from '@/components/GuiaTab';
 import { ProgressoTab } from '@/components/ProgressoTab';
 import { BottomNav, TabType } from '@/components/BottomNav';
+import { BackupReminderBanner } from '@/components/BackupReminderBanner';
+import { runSafeMigrations } from '@/lib/storage';
 import { Dumbbell, WifiOff, Sun, Moon } from 'lucide-react';
 
 export default function Home() {
@@ -13,8 +15,24 @@ export default function Home() {
   const [isOnline, setIsOnline] = useState<boolean>(true);
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
 
-  // Inicializa tema e detector de rede
+  // Inicializa tema, migrações seguras, persistência e detector de rede
   useEffect(() => {
+    // 1. Executa migrações com snapshot automático preventivo
+    runSafeMigrations();
+
+    // 2. Solicita persistência robusta ao navegador para evitar limpeza de cache
+    if (typeof navigator !== 'undefined' && navigator.storage && navigator.storage.persist) {
+      navigator.storage.persisted().then((isPersisted) => {
+        if (!isPersisted) {
+          navigator.storage.persist().then((granted) => {
+            if (granted) {
+              console.log('[FitLog Storage] Persistência concedida pelo navegador.');
+            }
+          });
+        }
+      });
+    }
+
     const savedTheme = window.localStorage.getItem('fitlog_theme') as 'light' | 'dark' | null;
     if (savedTheme) {
       setTheme(savedTheme);
@@ -100,6 +118,7 @@ export default function Home() {
 
       {/* Conteúdo Principal com max-w-md centralizado no desktop */}
       <main className="flex-1 p-3.5 sm:p-4 max-w-md mx-auto w-full pb-36 sm:pb-40">
+        <BackupReminderBanner />
         {activeTab === 'treino' && <TreinoTab />}
         {activeTab === 'dieta' && <DietaTab />}
         {activeTab === 'guia' && <GuiaTab />}
