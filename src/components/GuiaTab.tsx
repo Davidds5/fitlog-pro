@@ -228,7 +228,7 @@ export function GuiaTab() {
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Buscar por nome, subgrupo ou equipamento..."
+            placeholder="Buscar exercício ou subgrupo..."
             className="w-full bg-[var(--surface-subtle)] border border-[var(--border)] rounded-2xl pl-10 pr-9 py-2.5 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-primary)] placeholder-[var(--text-faint)]"
           />
           {searchTerm && (
