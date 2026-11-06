@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { TreinoTab } from '@/components/TreinoTab';
 import { DietaTab } from '@/components/DietaTab';
 import { GuiaTab } from '@/components/GuiaTab';
+import { ProgressoTab } from '@/components/ProgressoTab';
 import { BottomNav, TabType } from '@/components/BottomNav';
 import { Dumbbell, WifiOff, Sun, Moon } from 'lucide-react';
 
@@ -102,6 +103,7 @@ export default function Home() {
         {activeTab === 'treino' && <TreinoTab />}
         {activeTab === 'dieta' && <DietaTab />}
         {activeTab === 'guia' && <GuiaTab />}
+        {activeTab === 'progresso' && <ProgressoTab onGoToTreino={() => setActiveTab('treino')} />}
       </main>
 
       {/* Navegação Inferior Fixa */}

@@ -57,6 +57,13 @@ const prefix = process.argv[2] || 'antes';
         path: path.join(outDir, `${prefix}-${cfg.name}-guia-${theme}.png`),
       });
 
+      // 4. Progresso / Evolução tab
+      await page.click('button:has-text("Evolução")');
+      await page.waitForTimeout(600);
+      await page.screenshot({
+        path: path.join(outDir, `${prefix}-${cfg.name}-evolucao-${theme}.png`),
+      });
+
       await context.close();
     }
   }
@@ -64,3 +71,4 @@ const prefix = process.argv[2] || 'antes';
   await browser.close();
   console.log(`QA_SCREENSHOTS_${prefix.toUpperCase()}_SAVED`);
 })();
+

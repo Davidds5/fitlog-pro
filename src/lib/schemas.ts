@@ -53,15 +53,48 @@ export const SetLogEntrySchema = z.object({
   id: z.string().max(120),
   exerciseId: z.string().max(120),
   exerciseName: z.string().max(120),
+  muscleGroup: z.string().max(60).optional(),
+  workoutId: z.string().max(120).optional(),
+  sessionId: z.string().max(120).optional(),
   date: z.string().max(30),
-  setNumber: z.number().min(1).max(50),
+  serieNumber: z.number().min(1).max(50).default(1),
+  setNumber: z.number().min(1).max(50).optional(),
   weight: z.number().min(0).max(1000),
   reps: z.number().min(0).max(200),
   oneRM: z.number().min(0).max(1500),
+  volume: z.number().min(0).max(200000).optional(),
   timestamp: z.number().min(0),
 });
 
-export const HistoryArraySchema = z.array(SetLogEntrySchema).max(5000);
+export const HistoryArraySchema = z.array(SetLogEntrySchema).max(10000);
+
+// Schema de Sessão de Treino Concluído
+export const WorkoutSessionSchema = z.object({
+  id: z.string().max(120),
+  date: z.string().max(30),
+  workoutId: z.string().max(120),
+  workoutName: z.string().max(120),
+  durationMinutes: z.number().min(0).max(1000).default(0),
+  durationSeconds: z.number().min(0).max(60000).default(0),
+  totalVolumeKg: z.number().min(0).max(2000000).default(0),
+  completedSetsCount: z.number().min(0).max(300).default(0),
+  totalSetsCount: z.number().min(0).max(300).default(0),
+  prCount: z.number().min(0).max(100).default(0),
+  improvedSetsCount: z.number().min(0).max(100).default(0),
+  timestamp: z.number().min(0),
+});
+
+export const WorkoutSessionsArraySchema = z.array(WorkoutSessionSchema).max(5000);
+
+// Schema de Registro de Peso Corporal
+export const BodyWeightEntrySchema = z.object({
+  id: z.string().max(120),
+  date: z.string().max(30),
+  weight: z.number().min(20).max(400),
+  timestamp: z.number().min(0),
+});
+
+export const BodyWeightArraySchema = z.array(BodyWeightEntrySchema).max(2000);
 
 // Schema de Item de Refeição
 export const MealItemLogSchema = z.object({
@@ -111,6 +144,20 @@ export const CustomExerciseItemSchema = z.object({
 
 export const CustomExercisesArraySchema = z.array(CustomExerciseItemSchema).max(300);
 
+// Schema de Backup do FitLog Pro (JSON de Exportação/Importação)
+export const FitLogBackupSchema = z.object({
+  version: z.number().default(2),
+  exportedAt: z.string().max(50),
+  fichas: WorkoutFichasArraySchema.optional(),
+  sessions: WorkoutSessionsArraySchema.optional(),
+  history: HistoryArraySchema.optional(),
+  profile: UserProfileSchema.optional(),
+  dietLogs: DailyDietLogsArraySchema.optional(),
+  bodyWeightLogs: BodyWeightArraySchema.optional(),
+  customFoods: CustomFoodsArraySchema.optional(),
+  customExercises: CustomExercisesArraySchema.optional(),
+});
+
 /**
  * Mapa central de validadores por chave de LocalStorage
  */
@@ -118,6 +165,8 @@ export const STORAGE_VALIDATORS: Record<string, z.ZodTypeAny> = {
   fitlog_profile: UserProfileSchema,
   fitlog_fichas: WorkoutFichasArraySchema,
   fitlog_history: HistoryArraySchema,
+  fitlog_sessions: WorkoutSessionsArraySchema,
+  fitlog_body_weight: BodyWeightArraySchema,
   fitlog_diet_logs: DailyDietLogsArraySchema,
   fitlog_custom_foods: CustomFoodsArraySchema,
   fitlog_custom_exercises: CustomExercisesArraySchema,

@@ -1,18 +1,23 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import defaultFichas from '@/data/fichas.json';
 import defaultExercicios from '@/data/exercicios.json';
-import { useLocalStorage, SetLogEntry } from '@/lib/storage';
+import { useLocalStorage, SetLogEntry, WorkoutSession } from '@/lib/storage';
 import {
   PeriodizationPhase,
   calculate1RM,
   getPhaseSeriesConfig,
   recalculateSeriesForPhase,
   isRepsOutOfRange,
-  checkPersonalRecord,
   ExerciseSerie,
 } from '@/lib/pyramid';
+import {
+  ComparisonMode,
+  getComparisonReference,
+  calculateSetProgression,
+  checkIsSetPR,
+} from '@/lib/evolution';
 import { getMuscleInfo } from '@/lib/muscles';
 import { RestTimerModal } from './RestTimerModal';
 import { WorkoutEditorModal } from './WorkoutEditorModal';
@@ -31,6 +36,7 @@ import {
   Layers,
   ChevronDown,
   ChevronUp,
+  TrendingUp,
 } from 'lucide-react';
 
 export interface WorkoutExercise {
@@ -56,6 +62,8 @@ export interface WorkoutFicha {
 export function TreinoTab() {
   const [fichas, setFichas] = useLocalStorage<WorkoutFicha[]>('fitlog_fichas', defaultFichas as unknown as WorkoutFicha[]);
   const [history, setHistory] = useLocalStorage<SetLogEntry[]>('fitlog_history', []);
+  const [sessions, setSessions] = useLocalStorage<WorkoutSession[]>('fitlog_sessions', []);
+  const [comparisonMode, setComparisonMode] = useLocalStorage<ComparisonMode>('fitlog_comparison_mode', 'last_workout');
   const [activeFichaId, setActiveFichaId] = useState<string>('ficha-a');
 
   // Modais de Controle
@@ -167,17 +175,29 @@ export function TreinoTab() {
 
   const todayDayOfWeek = new Date().getDay();
 
-  // Histórico anterior para uma série específica
+  // Histórico anterior para uma série de acordo com o modo de comparação
   const getPreviousSerieLog = (exerciseId: string, serieNumber: number) => {
-    const matches = history
-      .filter((h) => h.exerciseId === exerciseId && (h.serieNumber === serieNumber || (h as unknown as { setNumber?: number }).setNumber === serieNumber))
-      .sort((a, b) => b.timestamp - a.timestamp);
-    if (matches.length > 0) return matches[0];
+    return getComparisonReference(exerciseId, serieNumber, comparisonMode, history);
+  };
 
-    const generalMatches = history
-      .filter((h) => h.exerciseId === exerciseId)
-      .sort((a, b) => b.timestamp - a.timestamp);
-    return generalMatches[0] || null;
+  // Pré-preenche a série com o valor da referência
+  const prefillSerie = (exerciseId: string, serieId: string, refWeight: number, refReps: number) => {
+    if (!activeFicha || refWeight <= 0) return;
+    setFichas((prev) =>
+      prev.map((ficha) => {
+        if (ficha.id !== activeFicha.id) return ficha;
+        return {
+          ...ficha,
+          exercises: ficha.exercises.map((ex) => {
+            if (ex.id !== exerciseId) return ex;
+            return {
+              ...ex,
+              series: ex.series.map((s) => (s.id === serieId ? { ...s, weight: refWeight, reps: refReps || s.reps } : s)),
+            };
+          }),
+        };
+      })
+    );
   };
 
   // Salva alteração feita pelo Bottom Sheet Stepper
@@ -244,10 +264,13 @@ export function TreinoTab() {
         date: dateStr,
         exerciseId: exercise.exerciseId,
         exerciseName: exercise.name,
+        muscleGroup: exercise.muscleGroup,
+        workoutId: activeFicha.id,
         serieNumber: serie.serieNumber,
         weight: serie.weight,
         reps: serie.reps,
         oneRM: estimated1RM,
+        volume: serie.weight * serie.reps,
         timestamp: Date.now(),
       };
       setHistory((prev) => [...prev, newEntry]);
@@ -431,6 +454,73 @@ export function TreinoTab() {
   const formattedDuration = `${String(workoutMinutes).padStart(2, '0')}:${String(workoutSecs).padStart(2, '0')}`;
   const progressPercent = totalSeriesCount > 0 ? Math.round((completedSeriesCount / totalSeriesCount) * 100) : 0;
 
+  // PRs batidos no treino atual
+  const currentPRCount = useMemo(() => {
+    if (!activeFicha) return 0;
+    let count = 0;
+    activeFicha.exercises.forEach((ex) => {
+      ex.series.forEach((s) => {
+        if (s.completed && s.weight > 0) {
+          const pr = checkIsSetPR(ex.exerciseId, s.weight, s.reps, history);
+          if (pr.isPR) count++;
+        }
+      });
+    });
+    return count;
+  }, [activeFicha, history]);
+
+  // Séries que evoluíram comparadas à referência
+  const currentImprovedCount = useMemo(() => {
+    if (!activeFicha) return 0;
+    let count = 0;
+    activeFicha.exercises.forEach((ex) => {
+      ex.series.forEach((s) => {
+        if (s.completed && s.weight > 0) {
+          const ref = getComparisonReference(ex.exerciseId, s.serieNumber, comparisonMode, history);
+          if (ref && ref.weight > 0) {
+            const prog = calculateSetProgression(s.weight, s.reps, ref.weight, ref.reps);
+            if (prog.status === 'better') count++;
+          }
+        }
+      });
+    });
+    return count;
+  }, [activeFicha, history, comparisonMode]);
+
+  // Última sessão concluída deste mesmo treino
+  const previousSession = useMemo(() => {
+    if (!activeFicha) return null;
+    return sessions.find((s) => s.workoutId === activeFicha.id) || sessions[0] || null;
+  }, [activeFicha, sessions]);
+
+  // Variação percentual de volume total vs sessão anterior
+  const volumeDiffPercent = useMemo(() => {
+    if (!previousSession || previousSession.totalVolumeKg <= 0 || totalVolumeKg <= 0) return null;
+    return Math.round(((totalVolumeKg - previousSession.totalVolumeKg) / previousSession.totalVolumeKg) * 1000) / 10;
+  }, [previousSession, totalVolumeKg]);
+
+  // Grava a sessão ao concluir o treino
+  const handleFinishAndSaveSession = () => {
+    if (!activeFicha) return;
+    const newSession: WorkoutSession = {
+      id: `sess-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      date: new Date().toISOString().split('T')[0],
+      workoutId: activeFicha.id,
+      workoutName: activeFicha.name,
+      durationMinutes: workoutMinutes,
+      durationSeconds: workoutSeconds,
+      totalVolumeKg,
+      completedSetsCount: completedSeriesCount,
+      totalSetsCount: totalSeriesCount,
+      prCount: currentPRCount,
+      improvedSetsCount: currentImprovedCount,
+      timestamp: Date.now(),
+    };
+
+    setSessions((prev) => [newSession, ...prev]);
+    resetWorkoutCompletion();
+  };
+
   const phaseConfig = getPhaseSeriesConfig(activeFicha?.phase || 'piramide');
 
   // Encontra o primeiro exercício que ainda tem séries pendentes
@@ -536,9 +626,9 @@ export function TreinoTab() {
       {/* 2. CABEÇALHO DO TREINO ENXUTO (V3) */}
       <div className="interactive-card p-4 shadow-sm space-y-3">
         {/* Linha 1: Nome do Treino + Ações */}
-        <div className="flex items-center justify-between gap-2">
-          <div className="truncate">
-            <div className="flex items-center gap-1.5 mb-0.5">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1 min-w-0 pr-2">
+            <div className="flex items-center gap-1.5 mb-1">
               <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-[var(--brand-primary)]/15 text-[var(--brand-primary)] border border-[var(--brand-primary)]/30">
                 {activeFicha.letter || 'Treino'}
               </span>
@@ -548,12 +638,12 @@ export function TreinoTab() {
                 </span>
               )}
             </div>
-            <h1 className="text-base font-black text-[var(--text-primary)] truncate">
+            <h1 className="text-base font-black text-[var(--text-primary)] leading-snug break-words">
               {activeFicha.name}
             </h1>
           </div>
 
-          <div className="flex items-center gap-1 shrink-0">
+          <div className="flex items-center gap-1 shrink-0 pt-0.5">
             <button
               onClick={() => setIsEditorOpen(true)}
               title="Editar treino"
@@ -617,6 +707,36 @@ export function TreinoTab() {
               </button>
             );
           })}
+        </div>
+
+        {/* Linha 4: Seletor de Comparação (Último treino | Semana passada | Mês passado | Melhor marca) */}
+        <div className="flex items-center justify-between gap-1 pt-1.5 border-t border-[var(--border)] text-xs">
+          <span className="text-[11px] font-bold text-[var(--text-muted)] flex items-center gap-1 shrink-0">
+            <TrendingUp className="w-3.5 h-3.5 text-[var(--brand-primary)]" /> Comparar com:
+          </span>
+          <div className="flex items-center gap-1 p-0.5 rounded-xl bg-[var(--surface-subtle)] border border-[var(--border)] overflow-x-auto no-scrollbar">
+            {(
+              [
+                { key: 'last_workout', label: 'Último' },
+                { key: 'last_week', label: 'Semana' },
+                { key: 'last_month', label: 'Mês' },
+                { key: 'all_time_best', label: 'Melhor' },
+              ] as const
+            ).map((opt) => (
+              <button
+                key={opt.key}
+                type="button"
+                onClick={() => setComparisonMode(opt.key)}
+                className={`px-2 py-0.5 rounded-lg text-[11px] font-bold transition-all whitespace-nowrap ${
+                  comparisonMode === opt.key
+                    ? 'bg-[var(--brand-primary)] text-white shadow-xs'
+                    : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -713,12 +833,23 @@ export function TreinoTab() {
                   const targetConfig = phaseConfig[sIndex] || phaseConfig[phaseConfig.length - 1];
                   const prevLog = getPreviousSerieLog(exercise.exerciseId, serie.serieNumber);
                   const isOutOfRange = isRepsOutOfRange(serie.reps, targetConfig.minReps, targetConfig.maxReps);
-                  const prResult = checkPersonalRecord(exercise.exerciseId, serie.weight, serie.reps, history);
+                  
+                  // Progressão comparada à referência
+                  const progression =
+                    prevLog && prevLog.weight > 0 && serie.weight > 0 && serie.reps > 0
+                      ? calculateSetProgression(serie.weight, serie.reps, prevLog.weight, prevLog.reps)
+                      : null;
+
+                  // Recorde Pessoal (PR)
+                  const prCheck =
+                    serie.completed && serie.weight > 0
+                      ? checkIsSetPR(exercise.exerciseId, serie.weight, serie.reps, history)
+                      : { isPR: false };
 
                   return (
                     <div
                       key={serie.id}
-                      className={`grid grid-cols-[28px_1fr_68px_60px_44px] items-center gap-2 px-2.5 py-2 rounded-xl transition-all border min-h-[52px] ${
+                      className={`grid grid-cols-[24px_1fr_68px_54px_42px] items-center gap-1.5 px-2.5 py-2 rounded-xl transition-all border min-h-[54px] ${
                         serie.completed
                           ? 'bg-emerald-500/10 border-emerald-500/30'
                           : 'bg-[var(--surface-subtle)]/70 border-[var(--border)] hover:border-[var(--brand-primary)]/30'
@@ -729,23 +860,57 @@ export function TreinoTab() {
                         {serie.serieNumber}
                       </span>
 
-                      {/* Anterior */}
-                      <div className="truncate text-xs tabular-nums">
+                      {/* Anterior (Coluna Legível >= 13px com Toque para Preencher e Indicadores) */}
+                      <div className="flex flex-col justify-center min-w-0 pr-1">
                         {prevLog && prevLog.weight > 0 ? (
-                          <span className="font-semibold text-[var(--text-primary)] font-mono">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (serie.weight === 0) {
+                                prefillSerie(exercise.id, serie.id, prevLog.weight, prevLog.reps);
+                              }
+                            }}
+                            title={serie.weight === 0 ? 'Toque para copiar carga anterior' : `${prevLog.label}: ${prevLog.date}`}
+                            className={`text-[13px] font-mono tabular-nums leading-tight text-left truncate ${
+                              serie.weight === 0
+                                ? 'text-[var(--brand-primary)] hover:underline font-bold cursor-pointer'
+                                : 'text-[var(--text-primary)] font-medium'
+                            }`}
+                          >
                             {prevLog.weight}kg × {prevLog.reps}
-                          </span>
+                          </button>
                         ) : (
-                          <span className="text-[var(--text-faint)] font-mono">—</span>
+                          <span className="text-[13px] font-mono text-[var(--text-faint)] leading-tight">—</span>
                         )}
-                        {prResult.isPR && (
-                          <span className="text-[8px] font-black ml-1 px-1 py-0.2 rounded bg-amber-500/20 text-amber-500">
-                            PR
-                          </span>
-                        )}
+
+                        {/* Badges de Evolução (↑ +2kg / = igual / ↓ -1kg) e PR */}
+                        <div className="flex items-center gap-1 mt-0.5 flex-wrap">
+                          {progression && progression.status !== 'neutral' && (
+                            <span
+                              className={`text-[10px] font-black px-1 py-0.2 rounded leading-none ${
+                                progression.status === 'better'
+                                  ? 'bg-emerald-500/15 text-emerald-500 border border-emerald-500/20'
+                                  : progression.status === 'worse'
+                                  ? 'bg-amber-500/15 text-amber-500 border border-amber-500/20'
+                                  : 'text-[var(--text-muted)] bg-[var(--surface)] border border-[var(--border)]'
+                              }`}
+                            >
+                              {progression.label}
+                            </span>
+                          )}
+
+                          {prCheck.isPR && (
+                            <span
+                              title={prCheck.label}
+                              className="text-[9px] font-black px-1.5 py-0.2 rounded bg-gradient-to-r from-amber-500 to-yellow-400 text-black shadow-xs font-sans leading-none"
+                            >
+                              PR 🏆
+                            </span>
+                          )}
+                        </div>
                       </div>
 
-                      {/* Botão Carga (kg) */}
+                      {/* Botão Carga (kg) - Mostra valor ou placeholder da referência */}
                       <button
                         type="button"
                         onClick={() =>
@@ -755,15 +920,21 @@ export function TreinoTab() {
                             exerciseName: exercise.name,
                             serieId: serie.id,
                             serieNumber: serie.serieNumber,
-                            initialWeight: serie.weight,
-                            initialReps: serie.reps,
+                            initialWeight: serie.weight > 0 ? serie.weight : (prevLog?.weight || 0),
+                            initialReps: serie.reps > 0 ? serie.reps : (prevLog?.reps || targetConfig?.defaultReps || 12),
                             targetRepsText: targetConfig?.targetReps,
                             initialMode: 'weight',
                           })
                         }
                         className="h-9 px-1 rounded-xl bg-[var(--surface)] border border-[var(--border)] text-xs font-black font-mono tabular-nums text-[var(--text-primary)] hover:border-[var(--brand-primary)] active:scale-95 transition-all flex items-center justify-center shadow-xs"
                       >
-                        {serie.weight > 0 ? `${serie.weight}kg` : '—'}
+                        {serie.weight > 0 ? (
+                          `${serie.weight}kg`
+                        ) : prevLog && prevLog.weight > 0 ? (
+                          <span className="text-[var(--text-muted)] opacity-60 font-semibold">{prevLog.weight}kg</span>
+                        ) : (
+                          '0kg'
+                        )}
                       </button>
 
                       {/* Botão Reps */}
@@ -776,7 +947,7 @@ export function TreinoTab() {
                             exerciseName: exercise.name,
                             serieId: serie.id,
                             serieNumber: serie.serieNumber,
-                            initialWeight: serie.weight,
+                            initialWeight: serie.weight > 0 ? serie.weight : (prevLog?.weight || 0),
                             initialReps: serie.reps,
                             targetRepsText: targetConfig?.targetReps,
                             initialMode: 'reps',
@@ -912,8 +1083,10 @@ export function TreinoTab() {
         totalSets={totalSeriesCount}
         totalVolumeKg={totalVolumeKg}
         durationMinutes={workoutMinutes}
-        prCount={0}
-        onResetCompleted={resetWorkoutCompletion}
+        prCount={currentPRCount}
+        improvedSetsCount={currentImprovedCount}
+        volumeDiffPercent={volumeDiffPercent}
+        onResetCompleted={handleFinishAndSaveSession}
       />
 
       {/* CRONÔMETRO DE DESCANSO (PÍLULA FLUTUANTE) */}

@@ -91,10 +91,36 @@ export interface SetLogEntry {
   date: string;
   exerciseId: string;
   exerciseName: string;
+  muscleGroup?: string;
+  workoutId?: string;
+  sessionId?: string;
   serieNumber: number;
   weight: number;
   reps: number;
   oneRM: number;
+  volume?: number;
+  timestamp: number;
+}
+
+export interface WorkoutSession {
+  id: string;
+  date: string;
+  workoutId: string;
+  workoutName: string;
+  durationMinutes: number;
+  durationSeconds: number;
+  totalVolumeKg: number;
+  completedSetsCount: number;
+  totalSetsCount: number;
+  prCount: number;
+  improvedSetsCount: number;
+  timestamp: number;
+}
+
+export interface BodyWeightEntry {
+  id: string;
+  date: string;
+  weight: number;
   timestamp: number;
 }
 
