@@ -29,6 +29,7 @@ interface ExerciseItem {
 }
 
 const MUSCLE_GROUPS = ['Todos', 'Peito', 'Costas', 'Ombros', 'Bíceps', 'Tríceps', 'Pernas', 'Abdômen'] as const;
+const EQUIPMENT_OPTIONS = ['Todos', 'Halteres', 'Barra', 'Polia / Cabo', 'Máquina', 'Peso Corporal'] as const;
 
 const MUSCLE_ORDER: Record<string, number> = {
   Peito: 1,
@@ -68,6 +69,7 @@ export function GuiaTab() {
   const [customExercises, setCustomExercises] = useLocalStorage<CustomExerciseItem[]>('fitlog_custom_exercises', []);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [selectedMuscle, setSelectedMuscle] = useState<string>('Todos');
+  const [selectedEquipment, setSelectedEquipment] = useState<string>('Todos');
 
   // Controle de expansão de dicas
   const [expandedTipId, setExpandedTipId] = useState<string | null>(null);
@@ -91,14 +93,25 @@ export function GuiaTab() {
 
   const filteredExercises = allExercises.filter((ex) => {
     const matchesMuscle = selectedMuscle === 'Todos' || ex.muscleGroup === selectedMuscle;
+    const matchesEquip =
+      selectedEquipment === 'Todos' ||
+      (selectedEquipment === 'Polia / Cabo'
+        ? ex.equipment.toLowerCase().includes('polia') || ex.equipment.toLowerCase().includes('cabo')
+        : selectedEquipment === 'Peso Corporal'
+        ? ex.equipment.toLowerCase().includes('corporal') ||
+          ex.equipment.toLowerCase().includes('barra fixa') ||
+          ex.equipment.toLowerCase().includes('paralelas')
+        : ex.equipment.toLowerCase().includes(selectedEquipment.toLowerCase()));
+
     const normalizedQuery = normalizeSearchTerm(searchTerm);
-    if (!normalizedQuery) return matchesMuscle;
+    if (!normalizedQuery) return matchesMuscle && matchesEquip;
 
     const normalizedName = normalizeSearchTerm(ex.name);
     const normalizedSub = normalizeSearchTerm(ex.subGroup || '');
     const normalizedEquip = normalizeSearchTerm(ex.equipment || '');
     return (
       matchesMuscle &&
+      matchesEquip &&
       (normalizedName.includes(normalizedQuery) ||
         normalizedSub.includes(normalizedQuery) ||
         normalizedEquip.includes(normalizedQuery))
@@ -248,10 +261,37 @@ export function GuiaTab() {
           })}
         </div>
 
+        {/* Filtro por Equipamento */}
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-2.5">
+          <span className="text-[10px] font-black uppercase tracking-wider text-[var(--text-faint)] shrink-0">
+            Equip:
+          </span>
+          {EQUIPMENT_OPTIONS.map((equip) => {
+            const isSelected = selectedEquipment === equip;
+            return (
+              <button
+                key={equip}
+                type="button"
+                onClick={() => setSelectedEquipment(equip)}
+                className={`px-2.5 py-1 rounded-xl text-[11px] font-bold shrink-0 transition-all border ${
+                  isSelected
+                    ? 'bg-[var(--brand-primary)] text-white border-[var(--brand-primary)] shadow-xs'
+                    : 'bg-[var(--surface-subtle)] text-[var(--text-muted)] border-[var(--border)] hover:border-[var(--brand-primary)]/40 hover:text-[var(--text-primary)]'
+                }`}
+              >
+                {equip}
+              </button>
+            );
+          })}
+        </div>
+
         {/* Contador de Resultados */}
         <div className="text-[11px] text-[var(--text-faint)] font-semibold mt-2.5 flex items-center justify-between">
           <span>{filteredExercises.length} exercícios encontrados</span>
-          {selectedMuscle !== 'Todos' && <span className="text-[var(--brand-primary)] font-bold">Filtro: {selectedMuscle}</span>}
+          <div className="flex items-center gap-2">
+            {selectedMuscle !== 'Todos' && <span className="text-[var(--brand-primary)] font-bold">Músculo: {selectedMuscle}</span>}
+            {selectedEquipment !== 'Todos' && <span className="text-[var(--brand-primary)] font-bold">Equip: {selectedEquipment}</span>}
+          </div>
         </div>
       </div>
 

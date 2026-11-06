@@ -18,21 +18,19 @@ import { RestTimerModal } from './RestTimerModal';
 import { WorkoutEditorModal } from './WorkoutEditorModal';
 import { WorkoutTemplatesModal } from './WorkoutTemplatesModal';
 import { WorkoutSummaryModal } from './WorkoutSummaryModal';
+import { SerieStepperSheet } from './SerieStepperSheet';
 import {
-  CheckCircle2,
-  Clock,
   RotateCcw,
   Plus,
   Trash2,
-  TrendingUp,
-  History,
   Check,
-  AlertCircle,
   Trophy,
   Edit3,
   Dumbbell,
   Calendar,
   Layers,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 
 export interface WorkoutExercise {
@@ -72,8 +70,30 @@ export function TreinoTab() {
   const [isAddExModalOpen, setIsAddExModalOpen] = useState<boolean>(false);
   const [selectedExToAdd, setSelectedExToAdd] = useState<string>(defaultExercicios[0]?.id || '');
 
-  // Expansão manual de séries (qual série está expandida em cada exercício)
-  const [expandedSeriesMap, setExpandedSeriesMap] = useState<Record<string, string>>({});
+  // Controle de colapso de exercícios: mapeia exerciseId -> boolean (true = recolhido)
+  const [collapsedMap, setCollapsedMap] = useState<Record<string, boolean>>({});
+
+  // Bottom Sheet de Stepper de Carga/Reps
+  const [stepperState, setStepperState] = useState<{
+    isOpen: boolean;
+    exerciseId: string;
+    exerciseName: string;
+    serieId: string;
+    serieNumber: number;
+    initialWeight: number;
+    initialReps: number;
+    targetRepsText?: string;
+    initialMode: 'weight' | 'reps';
+  }>({
+    isOpen: false,
+    exerciseId: '',
+    exerciseName: '',
+    serieId: '',
+    serieNumber: 1,
+    initialWeight: 0,
+    initialReps: 12,
+    initialMode: 'weight',
+  });
 
   // Cronômetro de tempo de treino
   const [workoutSeconds, setWorkoutSeconds] = useState<number>(0);
@@ -98,40 +118,36 @@ export function TreinoTab() {
 
     const sanitized = fichas.map((f, fIdx) => {
       let fId = f.id;
-      if (seenFichaIds.has(fId)) {
-        fId = `${fId}-${fIdx}-${Math.random().toString(36).substring(2, 5)}`;
+      if (!fId || seenFichaIds.has(fId)) {
         hasDuplicates = true;
+        fId = `ficha-${Date.now()}-${fIdx}-${Math.random().toString(36).substring(2, 6)}`;
       }
       seenFichaIds.add(fId);
 
       const seenExIds = new Set<string>();
-      const sanitizedExercises = f.exercises.map((ex, exIdx) => {
+      const sanitizedExs = f.exercises.map((ex, exIdx) => {
         let exId = ex.id;
-        if (seenExIds.has(exId)) {
-          exId = `${exId}-${exIdx}-${Math.random().toString(36).substring(2, 5)}`;
+        if (!exId || seenExIds.has(exId)) {
           hasDuplicates = true;
+          exId = `ex-${Date.now()}-${exIdx}-${Math.random().toString(36).substring(2, 6)}`;
         }
         seenExIds.add(exId);
 
-        const seenSIds = new Set<string>();
+        const seenSerieIds = new Set<string>();
         const sanitizedSeries = ex.series.map((s, sIdx) => {
           let sId = s.id;
-          if (seenSIds.has(sId)) {
-            sId = `${sId}-${sIdx}-${Math.random().toString(36).substring(2, 5)}`;
+          if (!sId || seenSerieIds.has(sId)) {
             hasDuplicates = true;
+            sId = `s-${sIdx + 1}-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
           }
-          seenSIds.add(sId);
-          return sId === s.id ? s : { ...s, id: sId };
+          seenSerieIds.add(sId);
+          return { ...s, id: sId, serieNumber: sIdx + 1 };
         });
 
-        return exId === ex.id && sanitizedSeries === ex.series
-          ? ex
-          : { ...ex, id: exId, series: sanitizedSeries };
+        return { ...ex, id: exId, series: sanitizedSeries };
       });
 
-      return fId === f.id && sanitizedExercises === f.exercises
-        ? f
-        : { ...f, id: fId, exercises: sanitizedExercises };
+      return { ...f, id: fId, exercises: sanitizedExs };
     });
 
     if (hasDuplicates) {
@@ -139,56 +155,44 @@ export function TreinoTab() {
     }
   }, [fichas, setFichas]);
 
-  const activeFicha = fichas.find((f) => f.id === activeFichaId) || fichas[0] || {
-    id: 'empty',
-    name: 'Nenhum Treino',
-    letter: 'Vazio',
-    description: '',
-    phase: 'base',
-    exercises: [],
-  };
+  // Busca a ficha ativa
+  const activeFichaIndex = fichas.findIndex((f) => f.id === activeFichaId);
+  const activeFicha = activeFichaIndex >= 0 ? fichas[activeFichaIndex] : fichas[0];
 
-  // Dia de hoje (0=Dom, 1=Seg, etc.)
+  useEffect(() => {
+    if (!activeFicha && fichas.length > 0) {
+      setActiveFichaId(fichas[0].id);
+    }
+  }, [activeFicha, fichas]);
+
   const todayDayOfWeek = new Date().getDay();
 
-  // Histórico do exercício
-  const getLastPerformance = (exerciseId: string) => {
-    const logs = history.filter((h) => h.exerciseId === exerciseId);
-    if (!logs.length) return null;
-    return logs[logs.length - 1];
+  // Histórico anterior para uma série específica
+  const getPreviousSerieLog = (exerciseId: string, serieNumber: number) => {
+    const matches = history
+      .filter((h) => h.exerciseId === exerciseId && (h.serieNumber === serieNumber || (h as unknown as { setNumber?: number }).setNumber === serieNumber))
+      .sort((a, b) => b.timestamp - a.timestamp);
+    if (matches.length > 0) return matches[0];
+
+    const generalMatches = history
+      .filter((h) => h.exerciseId === exerciseId)
+      .sort((a, b) => b.timestamp - a.timestamp);
+    return generalMatches[0] || null;
   };
 
-  // Métricas do Treino
-  const allSeries = activeFicha.exercises.flatMap((ex) => ex.series);
-  const completedSeriesCount = allSeries.filter((s) => s.completed).length;
-  const totalSeriesCount = allSeries.length;
-  const progressPercent = totalSeriesCount > 0 ? Math.round((completedSeriesCount / totalSeriesCount) * 100) : 0;
-
-  const totalVolumeKg = activeFicha.exercises.reduce((accEx, ex) => {
-    return (
-      accEx +
-      ex.series.reduce((accS, s) => {
-        return s.completed ? accS + s.weight * s.reps : accS;
-      }, 0)
-    );
-  }, 0);
-
-  // Alterar peso de uma série
-  const updateSerieWeight = (exerciseId: string, serieId: string, delta: number) => {
+  // Salva alteração feita pelo Bottom Sheet Stepper
+  const handleSaveStepper = (weight: number, reps: number) => {
+    if (!activeFicha) return;
     setFichas((prev) =>
       prev.map((ficha) => {
         if (ficha.id !== activeFicha.id) return ficha;
         return {
           ...ficha,
           exercises: ficha.exercises.map((ex) => {
-            if (ex.id !== exerciseId) return ex;
+            if (ex.id !== stepperState.exerciseId) return ex;
             return {
               ...ex,
-              series: ex.series.map((s) => {
-                if (s.id !== serieId) return s;
-                const newWeight = Math.max(0, Math.round((s.weight + delta) * 10) / 10);
-                return { ...s, weight: newWeight };
-              }),
+              series: ex.series.map((s) => (s.id === stepperState.serieId ? { ...s, weight, reps } : s)),
             };
           }),
         };
@@ -196,91 +200,19 @@ export function TreinoTab() {
     );
   };
 
-  // Digitar peso diretamente
-  const promptDirectWeight = (exerciseId: string, serieId: string, currentWeight: number) => {
-    const input = window.prompt('Digite a carga em kg:', String(currentWeight));
-    if (input === null) return;
-    const parsed = parseFloat(input.replace(',', '.'));
-    if (!isNaN(parsed) && parsed >= 0) {
-      setFichas((prev) =>
-        prev.map((ficha) => {
-          if (ficha.id !== activeFicha.id) return ficha;
-          return {
-            ...ficha,
-            exercises: ficha.exercises.map((ex) => {
-              if (ex.id !== exerciseId) return ex;
-              return {
-                ...ex,
-                series: ex.series.map((s) => (s.id === serieId ? { ...s, weight: Math.round(parsed * 10) / 10 } : s)),
-              };
-            }),
-          };
-        })
-      );
-    }
-  };
-
-  // Alterar repetições
-  const updateSerieReps = (exerciseId: string, serieId: string, delta: number) => {
-    setFichas((prev) =>
-      prev.map((ficha) => {
-        if (ficha.id !== activeFicha.id) return ficha;
-        return {
-          ...ficha,
-          exercises: ficha.exercises.map((ex) => {
-            if (ex.id !== exerciseId) return ex;
-            return {
-              ...ex,
-              series: ex.series.map((s) => {
-                if (s.id !== serieId) return s;
-                const newReps = Math.max(1, s.reps + delta);
-                return { ...s, reps: newReps };
-              }),
-            };
-          }),
-        };
-      })
-    );
-  };
-
-  // Digitar repetições diretamente
-  const promptDirectReps = (exerciseId: string, serieId: string, currentReps: number) => {
-    const input = window.prompt('Digite as repetições:', String(currentReps));
-    if (input === null) return;
-    const parsed = parseInt(input, 10);
-    if (!isNaN(parsed) && parsed > 0) {
-      setFichas((prev) =>
-        prev.map((ficha) => {
-          if (ficha.id !== activeFicha.id) return ficha;
-          return {
-            ...ficha,
-            exercises: ficha.exercises.map((ex) => {
-              if (ex.id !== exerciseId) return ex;
-              return {
-                ...ex,
-                series: ex.series.map((s) => (s.id === serieId ? { ...s, reps: parsed } : s)),
-              };
-            }),
-          };
-        })
-      );
-    }
-  };
-
-  // Concluir uma série
-  const completeSerie = (exercise: WorkoutExercise, serie: ExerciseSerie) => {
+  // Alterna conclusão da série com 1 toque
+  const toggleCompleteSerie = (exercise: WorkoutExercise, serie: ExerciseSerie) => {
+    if (!activeFicha) return;
     if (!isWorkoutTimerRunning) {
       setIsWorkoutTimerRunning(true);
     }
 
-    const now = new Date();
-    const dateStr = now.toISOString().split('T')[0];
-    const estimated1RM = calculate1RM(serie.weight, serie.reps);
+    const nextCompleted = !serie.completed;
 
-    // Vibração háptica
+    // Vibração háptica física
     if (typeof window !== 'undefined' && 'vibrate' in navigator) {
       try {
-        navigator.vibrate([150, 60, 150]);
+        navigator.vibrate(nextCompleted ? [40, 30, 40] : [20]);
       } catch {
         // ignora
       }
@@ -295,14 +227,18 @@ export function TreinoTab() {
             if (ex.id !== exercise.id) return ex;
             return {
               ...ex,
-              series: ex.series.map((s) => (s.id === serie.id ? { ...s, completed: !s.completed } : s)),
+              series: ex.series.map((s) => (s.id === serie.id ? { ...s, completed: nextCompleted } : s)),
             };
           }),
         };
       })
     );
 
-    if (!serie.completed) {
+    if (nextCompleted) {
+      const estimated1RM = calculate1RM(serie.weight, serie.reps);
+      const now = new Date();
+      const dateStr = now.toISOString().split('T')[0];
+
       const newEntry: SetLogEntry = {
         id: `log-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
         date: dateStr,
@@ -316,14 +252,23 @@ export function TreinoTab() {
       };
       setHistory((prev) => [...prev, newEntry]);
 
-      // Abre cronômetro de descanso
+      // Inicia descanso automático com pill flutuante
       setTimerDuration(90);
       setIsTimerOpen(true);
     }
   };
 
-  // Trocar fase
+  // Alterna colapso do exercício
+  const toggleExerciseCollapse = (exerciseId: string) => {
+    setCollapsedMap((prev) => ({
+      ...prev,
+      [exerciseId]: !prev[exerciseId],
+    }));
+  };
+
+  // Trocar fase da periodização
   const changePhase = (newPhase: PeriodizationPhase) => {
+    if (!activeFicha) return;
     setFichas((prev) =>
       prev.map((ficha) => {
         if (ficha.id !== activeFicha.id) return ficha;
@@ -331,7 +276,7 @@ export function TreinoTab() {
           ...ficha,
           phase: newPhase,
           exercises: ficha.exercises.map((ex) => {
-            const lastLog = getLastPerformance(ex.exerciseId);
+            const lastLog = getPreviousSerieLog(ex.exerciseId, 1);
             return {
               ...ex,
               series: recalculateSeriesForPhase(ex.series, newPhase, lastLog),
@@ -342,8 +287,9 @@ export function TreinoTab() {
     );
   };
 
-  // Resetar séries
+  // Resetar séries para novo treino
   const resetWorkoutCompletion = () => {
+    if (!activeFicha) return;
     setFichas((prev) =>
       prev.map((ficha) => {
         if (ficha.id !== activeFicha.id) return ficha;
@@ -360,12 +306,27 @@ export function TreinoTab() {
     setIsWorkoutTimerRunning(false);
   };
 
+  // Remover exercício
+  const removeExercise = (exerciseId: string) => {
+    if (!activeFicha) return;
+    setFichas((prev) =>
+      prev.map((ficha) => {
+        if (ficha.id !== activeFicha.id) return ficha;
+        return {
+          ...ficha,
+          exercises: ficha.exercises.filter((ex) => ex.id !== exerciseId),
+        };
+      })
+    );
+  };
+
   // Adicionar exercício rápido
   const handleAddExercise = () => {
+    if (!activeFicha) return;
     const baseEx = defaultExercicios.find((e) => e.id === selectedExToAdd);
     if (!baseEx) return;
 
-    const lastLog = getLastPerformance(baseEx.id);
+    const lastLog = getPreviousSerieLog(baseEx.id, 1);
     const configs = getPhaseSeriesConfig(activeFicha.phase || 'piramide');
     const oneRM = lastLog && lastLog.weight > 0 ? (lastLog.oneRM > 0 ? lastLog.oneRM : calculate1RM(lastLog.weight, lastLog.reps)) : 0;
 
@@ -388,87 +349,60 @@ export function TreinoTab() {
     setFichas((prev) =>
       prev.map((ficha) => {
         if (ficha.id !== activeFicha.id) return ficha;
-        return { ...ficha, exercises: [...ficha.exercises, newEx] };
+        return {
+          ...ficha,
+          exercises: [...ficha.exercises, newEx],
+        };
       })
     );
-
     setIsAddExModalOpen(false);
   };
 
-  // Duplicar exercício
-  const handleDuplicateExercise = (exercise: WorkoutExercise) => {
-    const duplicated: WorkoutExercise = {
-      ...exercise,
-      id: `ex-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-      name: `${exercise.name} (Cópia)`,
-      series: exercise.series.map((s) => ({
-        ...s,
-        id: `s-${Date.now()}-${Math.random()}`,
-        completed: false,
-      })),
-    };
-
-    setFichas((prev) =>
-      prev.map((f) => {
-        if (f.id !== activeFicha.id) return f;
-        return { ...f, exercises: [...f.exercises, duplicated] };
-      })
-    );
-  };
-
-  // Remover exercício
-  const removeExercise = (exerciseId: string) => {
-    setFichas((prev) =>
-      prev.map((ficha) => {
-        if (ficha.id !== activeFicha.id) return ficha;
-        return { ...ficha, exercises: ficha.exercises.filter((e) => e.id !== exerciseId) };
-      })
-    );
-  };
-
-  // Salvar treino editado ou criado
+  // Salvar Ficha editada
   const handleSaveFicha = (savedFicha: WorkoutFicha) => {
-    setFichas((prev) => {
-      const idx = prev.findIndex((f) => f.id === savedFicha.id);
-      if (idx >= 0) {
-        const copy = [...prev];
-        copy[idx] = savedFicha;
-        return copy;
-      }
-      return [...prev, savedFicha];
-    });
-    setActiveFichaId(savedFicha.id);
+    const exists = fichas.some((f) => f.id === savedFicha.id);
+    if (exists) {
+      setFichas((prev) => prev.map((f) => (f.id === savedFicha.id ? savedFicha : f)));
+    } else {
+      setFichas((prev) => [...prev, savedFicha]);
+      setActiveFichaId(savedFicha.id);
+    }
   };
 
-  // Excluir treino
+  // Excluir Ficha
   const handleDeleteFicha = (fichaId: string) => {
     setFichas((prev) => {
-      const filtered = prev.filter((f) => f.id !== fichaId);
-      if (filtered.length > 0) {
-        setActiveFichaId(filtered[0].id);
+      const remaining = prev.filter((f) => f.id !== fichaId);
+      if (remaining.length > 0) {
+        setActiveFichaId(remaining[0].id);
       }
-      return filtered;
+      return remaining;
     });
   };
 
-  // Duplicar treino
-  const handleDuplicateFicha = (f: WorkoutFicha) => {
-    const copy: WorkoutFicha = {
-      ...f,
-      id: `ficha-${Date.now()}`,
-      name: `${f.name} (Cópia)`,
-      letter: `${f.letter}²`,
-      exercises: f.exercises.map((ex) => ({
+  // Duplicar Ficha
+  const handleDuplicateFicha = (fichaToDup: WorkoutFicha) => {
+    const newId = `ficha-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+    const duplicated: WorkoutFicha = {
+      ...fichaToDup,
+      id: newId,
+      name: `${fichaToDup.name} (Cópia)`,
+      letter: `${fichaToDup.letter}+`,
+      exercises: fichaToDup.exercises.map((ex, exIdx) => ({
         ...ex,
-        id: `ex-${Date.now()}-${Math.random()}`,
-        series: ex.series.map((s) => ({ ...s, id: `s-${Date.now()}-${Math.random()}`, completed: false })),
+        id: `ex-${Date.now()}-${exIdx}-${Math.random().toString(36).substring(2, 6)}`,
+        series: ex.series.map((s, sIdx) => ({
+          ...s,
+          id: `s-${sIdx + 1}-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+          completed: false,
+        })),
       })),
     };
-    setFichas((prev) => [...prev, copy]);
-    setActiveFichaId(copy.id);
+    setFichas((prev) => [...prev, duplicated]);
+    setActiveFichaId(newId);
   };
 
-  // Aplicar modelo pronto
+  // Aplicar Template
   const handleApplyTemplate = (newFichas: WorkoutFicha[]) => {
     setFichas(newFichas);
     if (newFichas.length > 0) {
@@ -476,27 +410,92 @@ export function TreinoTab() {
     }
   };
 
-  const phaseConfig = getPhaseSeriesConfig(activeFicha.phase || 'piramide');
+  // Métricas do Treino Ativo
+  const totalSeriesCount = activeFicha ? activeFicha.exercises.reduce((acc, ex) => acc + ex.series.length, 0) : 0;
+  const completedSeriesCount = activeFicha
+    ? activeFicha.exercises.reduce((acc, ex) => acc + ex.series.filter((s) => s.completed).length, 0)
+    : 0;
+  const totalVolumeKg = activeFicha
+    ? activeFicha.exercises.reduce(
+        (acc, ex) =>
+          acc +
+          ex.series
+            .filter((s) => s.completed)
+            .reduce((sAcc, s) => sAcc + s.weight * s.reps, 0),
+        0
+      )
+    : 0;
 
   const workoutMinutes = Math.floor(workoutSeconds / 60);
   const workoutSecs = workoutSeconds % 60;
   const formattedDuration = `${String(workoutMinutes).padStart(2, '0')}:${String(workoutSecs).padStart(2, '0')}`;
+  const progressPercent = totalSeriesCount > 0 ? Math.round((completedSeriesCount / totalSeriesCount) * 100) : 0;
+
+  const phaseConfig = getPhaseSeriesConfig(activeFicha?.phase || 'piramide');
+
+  // Encontra o primeiro exercício que ainda tem séries pendentes
+  const firstPendingExerciseId = activeFicha?.exercises.find((ex) => ex.series.some((s) => !s.completed))?.id;
+
+  // Estado Vazio se o usuário não tiver treinos criados
+  if (!activeFicha || fichas.length === 0) {
+    return (
+      <div className="space-y-4 max-w-md mx-auto">
+        <div className="interactive-card p-8 text-center shadow-sm">
+          <div className="w-16 h-16 rounded-3xl bg-[var(--surface-subtle)] text-[var(--brand-primary)] mx-auto flex items-center justify-center mb-3">
+            <Dumbbell className="w-8 h-8" />
+          </div>
+          <h2 className="text-lg font-black text-[var(--text-primary)]">Crie seu primeiro treino</h2>
+          <p className="text-xs text-[var(--text-muted)] mt-1 max-w-xs mx-auto">
+            Personalize suas fichas com foco em hipertrofia ou aplique um dos nossos modelos profissionais.
+          </p>
+          <div className="flex gap-2.5 justify-center mt-5">
+            <button
+              onClick={() => setIsEditorOpen(true)}
+              className="btn-tactile text-xs py-2.5 px-4 font-bold flex items-center gap-1.5"
+            >
+              <Plus className="w-4 h-4" /> Novo Treino
+            </button>
+            <button
+              onClick={() => setIsTemplatesOpen(true)}
+              className="btn-secondary-tactile text-xs py-2.5 px-4 font-bold flex items-center gap-1.5"
+            >
+              <Layers className="w-4 h-4 text-[var(--brand-primary)]" /> Modelos Prontos
+            </button>
+          </div>
+        </div>
+
+        <WorkoutEditorModal
+          isOpen={isEditorOpen}
+          onClose={() => setIsEditorOpen(false)}
+          fichaToEdit={null}
+          onSave={handleSaveFicha}
+          onDelete={handleDeleteFicha}
+          onDuplicate={handleDuplicateFicha}
+        />
+        <WorkoutTemplatesModal
+          isOpen={isTemplatesOpen}
+          onClose={() => setIsTemplatesOpen(false)}
+          onApplyTemplate={handleApplyTemplate}
+        />
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-4 max-w-md mx-auto">
-      {/* 1. SELETOR DE TREINO: CARROSSEL DE CHIPS HORIZONTAIS + BOTÃO NOVO */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-0.5 no-scrollbar">
-        {fichas.map((ficha, fIdx) => {
-          const isActive = activeFicha.id === ficha.id;
+    <div className="space-y-4 max-w-md mx-auto pb-28">
+      {/* 1. SELETOR DE TREINOS DO USUÁRIO (CHIPS COMPACTOS) */}
+      <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+        {fichas.map((ficha) => {
+          const isActive = ficha.id === activeFicha.id;
           const isToday = ficha.weekDays && ficha.weekDays.includes(todayDayOfWeek);
 
           return (
             <button
-              key={`${ficha.id}-${fIdx}`}
+              key={ficha.id}
               onClick={() => setActiveFichaId(ficha.id)}
-              className={`relative px-3.5 py-2 rounded-2xl text-xs font-black whitespace-nowrap transition-all border shrink-0 min-h-[42px] flex items-center gap-1.5 ${
+              className={`px-3 py-2 rounded-2xl text-xs font-black transition-all shrink-0 min-h-[42px] border flex items-center gap-1.5 select-none ${
                 isActive
-                  ? 'bg-[var(--brand-primary)] text-white border-[var(--brand-primary)] shadow-md shadow-[var(--brand-primary)]/20'
+                  ? 'bg-[var(--brand-primary)] text-white border-[var(--brand-primary)] shadow-sm scale-102'
                   : 'bg-[var(--surface)] text-[var(--text-muted)] border-[var(--border)] hover:border-[var(--brand-primary)]'
               }`}
             >
@@ -514,7 +513,7 @@ export function TreinoTab() {
           );
         })}
 
-        {/* Chip para Abrir Novo Treino / Modelos */}
+        {/* Botão Novo Treino */}
         <button
           onClick={() => setIsEditorOpen(true)}
           title="Criar novo treino"
@@ -523,6 +522,7 @@ export function TreinoTab() {
           <Plus className="w-4 h-4" />
         </button>
 
+        {/* Botão Modelos Prontos */}
         <button
           onClick={() => setIsTemplatesOpen(true)}
           title="Modelos Prontos"
@@ -533,390 +533,277 @@ export function TreinoTab() {
         </button>
       </div>
 
-      {/* 2. HEADER MOTIVACIONAL DO TREINO (PROGRESSO, VOLUME, TEMPO & FINALIZAR) */}
-      <div className="interactive-card p-4 shadow-sm relative overflow-hidden">
-        {/* Faixa Superior com Nome e Botão de Editar */}
-        <div className="flex items-start justify-between gap-2 mb-3">
-          <div>
-            <div className="flex items-center gap-2">
+      {/* 2. CABEÇALHO DO TREINO ENXUTO (V3) */}
+      <div className="interactive-card p-4 shadow-sm space-y-3">
+        {/* Linha 1: Nome do Treino + Ações */}
+        <div className="flex items-center justify-between gap-2">
+          <div className="truncate">
+            <div className="flex items-center gap-1.5 mb-0.5">
               <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-[var(--brand-primary)]/15 text-[var(--brand-primary)] border border-[var(--brand-primary)]/30">
                 {activeFicha.letter || 'Treino'}
               </span>
               {activeFicha.weekDays && activeFicha.weekDays.includes(todayDayOfWeek) && (
-                <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
-                  <Calendar className="w-3 h-3" /> Treino de Hoje
+                <span className="text-[10px] font-black uppercase px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 flex items-center gap-1">
+                  <Calendar className="w-3 h-3" /> Hoje
                 </span>
               )}
             </div>
-            <h1 className="text-lg font-black text-[var(--text-primary)] mt-1">{activeFicha.name}</h1>
-            {activeFicha.description && (
-              <p className="text-xs text-[var(--text-muted)] mt-0.5">{activeFicha.description}</p>
-            )}
+            <h1 className="text-base font-black text-[var(--text-primary)] truncate">
+              {activeFicha.name}
+            </h1>
           </div>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 shrink-0">
             <button
               onClick={() => setIsEditorOpen(true)}
-              title="Editar treino (nome, cor, dias)"
-              className="p-2 text-[var(--text-muted)] hover:text-[var(--text-primary)] rounded-xl bg-[var(--surface-subtle)] border border-[var(--border)] min-h-[40px] min-w-[40px] flex items-center justify-center"
+              title="Editar treino"
+              className="p-2 text-[var(--text-muted)] hover:text-[var(--text-primary)] rounded-xl bg-[var(--surface-subtle)] border border-[var(--border)] min-h-[38px] min-w-[38px] flex items-center justify-center active:scale-95 transition-all"
             >
               <Edit3 className="w-4 h-4" />
             </button>
             <button
               onClick={resetWorkoutCompletion}
               title="Resetar séries para nova sessão"
-              className="p-2 text-[var(--text-muted)] hover:text-[var(--brand-primary)] rounded-xl bg-[var(--surface-subtle)] border border-[var(--border)] min-h-[40px] min-w-[40px] flex items-center justify-center"
+              className="p-2 text-[var(--text-muted)] hover:text-[var(--brand-primary)] rounded-xl bg-[var(--surface-subtle)] border border-[var(--border)] min-h-[38px] min-w-[38px] flex items-center justify-center active:scale-95 transition-all"
             >
               <RotateCcw className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        {/* Dashboard de Métricas da Sessão */}
-        <div className="grid grid-cols-3 gap-2 py-2.5 px-3 rounded-2xl bg-[var(--surface-subtle)] border border-[var(--border)] mb-3">
-          <div>
-            <span className="text-[9px] uppercase font-bold text-[var(--text-muted)] block">Séries</span>
-            <span className="text-sm font-black tabular-nums font-mono text-[var(--text-primary)]">
-              {completedSeriesCount} / {totalSeriesCount}
+        {/* Linha 2: 3 Métricas em 1 Linha Única + Barra de Progresso */}
+        <div className="space-y-1.5 pt-1 border-t border-[var(--border)]">
+          <div className="flex items-center justify-between text-xs font-mono tabular-nums text-[var(--text-muted)] font-bold">
+            <span>
+              Séries: <strong className="text-[var(--text-primary)]">{completedSeriesCount}/{totalSeriesCount}</strong>
+            </span>
+            <span>
+              Volume: <strong className="text-[var(--brand-primary)]">{Math.round(totalVolumeKg)} kg</strong>
+            </span>
+            <span>
+              Tempo: <strong className="text-[var(--text-primary)]">{formattedDuration}</strong>
             </span>
           </div>
 
-          <div>
-            <span className="text-[9px] uppercase font-bold text-[var(--text-muted)] block">Volume</span>
-            <span className="text-sm font-black tabular-nums font-mono text-[var(--brand-primary)]">
-              {Math.round(totalVolumeKg)} <span className="text-[10px]">kg</span>
-            </span>
-          </div>
-
-          <div>
-            <span className="text-[9px] uppercase font-bold text-[var(--text-muted)] block">Tempo</span>
-            <span className="text-sm font-black tabular-nums font-mono text-[var(--text-primary)]">
-              {formattedDuration}
-            </span>
+          <div className="w-full h-1.5 bg-[var(--surface-subtle)] rounded-full overflow-hidden border border-[var(--border)]">
+            <div
+              className="h-full bg-emerald-500 rounded-full transition-all duration-300"
+              style={{ width: `${progressPercent}%` }}
+            />
           </div>
         </div>
 
-        {/* Barra de Progresso do Treino */}
-        <div className="w-full h-2 bg-[var(--surface-subtle)] rounded-full overflow-hidden mb-3.5 border border-[var(--border)]">
-          <div
-            className="h-full bg-emerald-500 rounded-full transition-all duration-300"
-            style={{ width: `${progressPercent}%` }}
-          />
-        </div>
-
-        {/* Seletor de Periodização & Botão Finalizar Treino */}
-        <div className="flex items-center justify-between gap-2 pt-2 border-t border-[var(--border)]">
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => changePhase('base')}
-              className={`py-1 px-2 rounded-lg text-[11px] font-bold border transition-all ${
-                activeFicha.phase === 'base'
-                  ? 'bg-[var(--brand-primary)] text-white border-[var(--brand-primary)]'
-                  : 'bg-[var(--surface-subtle)] text-[var(--text-muted)] border-[var(--border)]'
-              }`}
-            >
-              Base
-            </button>
-            <button
-              onClick={() => changePhase('piramide')}
-              className={`py-1 px-2 rounded-lg text-[11px] font-bold border transition-all ${
-                activeFicha.phase === 'piramide'
-                  ? 'bg-[var(--brand-primary)] text-white border-[var(--brand-primary)]'
-                  : 'bg-[var(--surface-subtle)] text-[var(--text-muted)] border-[var(--border)]'
-              }`}
-            >
-              Pirâmide ▲
-            </button>
-            <button
-              onClick={() => changePhase('pico')}
-              className={`py-1 px-2 rounded-lg text-[11px] font-bold border transition-all ${
-                activeFicha.phase === 'pico'
-                  ? 'bg-[var(--brand-primary)] text-white border-[var(--brand-primary)]'
-                  : 'bg-[var(--surface-subtle)] text-[var(--text-muted)] border-[var(--border)]'
-              }`}
-            >
-              Pico
-            </button>
-          </div>
-
-          <button
-            onClick={() => setIsSummaryOpen(true)}
-            disabled={completedSeriesCount === 0}
-            className="btn-success-tactile text-xs py-1.5 px-3 min-h-[38px] flex items-center gap-1.5 font-bold disabled:opacity-40"
-          >
-            <Trophy className="w-3.5 h-3.5" />
-            <span>Finalizar Treino</span>
-          </button>
+        {/* Linha 3: Segmented Control de Periodização (Largura Total, Altura 40px) */}
+        <div className="grid grid-cols-3 gap-1 bg-[var(--surface-subtle)] p-1 rounded-2xl border border-[var(--border)] h-11">
+          {(['base', 'piramide', 'pico'] as PeriodizationPhase[]).map((phaseKey) => {
+            const isSelected = activeFicha.phase === phaseKey;
+            const labels: Record<PeriodizationPhase, string> = {
+              base: 'Base (12-15)',
+              piramide: 'Pirâmide ▲',
+              pico: 'Pico (6-8)',
+            };
+            return (
+              <button
+                key={phaseKey}
+                type="button"
+                onClick={() => changePhase(phaseKey)}
+                className={`h-full rounded-xl text-xs font-bold transition-all flex items-center justify-center ${
+                  isSelected
+                    ? 'bg-[var(--surface)] text-[var(--brand-primary)] shadow-xs border border-[var(--border)]'
+                    : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                }`}
+              >
+                {labels[phaseKey]}
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* 3. LISTA DE EXERCÍCIOS COM SÉRIES COMPACTADAS / EXPANDIDAS */}
-      <div className="space-y-4">
+      {/* 3. LISTA DE EXERCÍCIOS COM TABELA DE SÉRIES E COLAPSO (V3) */}
+      <div className="space-y-3">
         {activeFicha.exercises.map((exercise, exIndex) => {
-          const lastLog = getLastPerformance(exercise.exerciseId);
           const muscle = getMuscleInfo(exercise.muscleGroup);
+          const isAllDone = exercise.series.length > 0 && exercise.series.every((s) => s.completed);
 
-          // Qual série exibir expandida: a primeira pendente ou a selecionada manualmente
-          const activePendingSerie =
-            exercise.series.find((s) => !s.completed) || exercise.series[exercise.series.length - 1];
-          const expandedSerieId = expandedSeriesMap[exercise.id] || (activePendingSerie ? activePendingSerie.id : '');
+          // Estado colapsado: se foi explicitamente colapsado ou (se ainda não tocado) se já está 100% concluído e não for o primeiro pendente
+          const isExplicit = collapsedMap[exercise.id];
+          const isCollapsed = isExplicit !== undefined ? isExplicit : (isAllDone && exercise.id !== firstPendingExerciseId);
 
-          return (
-            <div key={`${exercise.id}-${exIndex}`} className="interactive-card p-4 shadow-sm">
-              {/* Topo do Card de Exercício */}
-              <div className="flex items-start justify-between gap-2 mb-2">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md border ${muscle.badgeBg} ${muscle.badgeText} ${muscle.badgeBorder}`}
-                    >
-                      {exercise.muscleGroup}
+          const maxWeight = Math.max(0, ...exercise.series.map((s) => s.weight));
+          const completedCount = exercise.series.filter((s) => s.completed).length;
+
+          // CARD COLAPSADO (1 linha elegante com check verde e resumo)
+          if (isCollapsed) {
+            return (
+              <div
+                key={exercise.id}
+                onClick={() => toggleExerciseCollapse(exercise.id)}
+                className="interactive-card p-3 shadow-xs border border-emerald-500/30 bg-emerald-500/5 hover:bg-emerald-500/10 transition-all cursor-pointer flex items-center justify-between"
+              >
+                <div className="flex items-center gap-2.5 truncate">
+                  <span className="w-6 h-6 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0">
+                    <Check className="w-3.5 h-3.5 stroke-[3]" />
+                  </span>
+                  <div className="truncate">
+                    <h4 className="text-xs font-bold text-[var(--text-primary)] truncate">{exercise.name}</h4>
+                    <span className="text-[10px] text-[var(--text-muted)] font-mono tabular-nums">
+                      {completedCount}/{exercise.series.length} séries • {maxWeight > 0 ? `${maxWeight}kg máx` : 'concluído'}
                     </span>
-                    <span className="text-xs text-[var(--text-faint)] font-bold">#{exIndex + 1}</span>
                   </div>
-                  <h3 className="text-base font-bold text-[var(--text-primary)] mt-1 leading-snug">{exercise.name}</h3>
-
-                  {/* Última vez */}
-                  {lastLog ? (
-                    <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-semibold mt-1">
-                      <History className="w-3.5 h-3.5" />
-                      <span>
-                        Última vez: <strong className="tabular-nums font-mono">{lastLog.weight}kg</strong> ×{' '}
-                        <strong className="tabular-nums font-mono">{lastLog.reps} reps</strong> (1RM ~{lastLog.oneRM}kg)
-                      </span>
-                    </div>
-                  ) : (
-                    <span className="text-[11px] text-[var(--text-faint)] mt-0.5 block">Sem treino anterior registrado</span>
-                  )}
                 </div>
+                <div className="flex items-center gap-1 text-[var(--text-faint)]">
+                  <ChevronDown className="w-4 h-4" />
+                </div>
+              </div>
+            );
+          }
 
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => handleDuplicateExercise(exercise)}
-                    title="Duplicar este exercício"
-                    className="p-1.5 text-[var(--text-muted)] hover:text-[var(--text-primary)] rounded-lg hover:bg-[var(--surface-subtle)]"
+          // CARD EXPANDIDO COM TABELA DE SÉRIES (~56px por linha)
+          return (
+            <div key={exercise.id} className="interactive-card p-3.5 shadow-sm space-y-2.5">
+              {/* Topo do Exercício */}
+              <div className="flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={() => toggleExerciseCollapse(exercise.id)}
+                  className="flex items-center gap-2 text-left truncate flex-1"
+                >
+                  <span
+                    className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md border ${muscle.badgeBg} ${muscle.badgeText} ${muscle.badgeBorder}`}
                   >
-                    <Plus className="w-3.5 h-3.5" />
-                  </button>
+                    {exercise.muscleGroup}
+                  </span>
+                  <span className="text-xs text-[var(--text-faint)] font-bold">#{exIndex + 1}</span>
+                  <h3 className="text-sm font-bold text-[var(--text-primary)] truncate">
+                    {exercise.name}
+                  </h3>
+                </button>
+
+                <div className="flex items-center gap-1 shrink-0">
                   <button
                     onClick={() => removeExercise(exercise.id)}
-                    title="Remover exercício da ficha"
-                    className="p-1.5 text-[var(--text-muted)] hover:text-red-500 rounded-lg hover:bg-[var(--surface-subtle)]"
+                    title="Remover exercício"
+                    className="p-1 text-[var(--text-muted)] hover:text-red-500 rounded-lg hover:bg-[var(--surface-subtle)]"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => toggleExerciseCollapse(exercise.id)}
+                    className="p-1 text-[var(--text-muted)] hover:text-[var(--text-primary)] rounded-lg hover:bg-[var(--surface-subtle)]"
+                  >
+                    <ChevronUp className="w-4 h-4" />
                   </button>
                 </div>
               </div>
 
-              {/* LISTA DAS SÉRIES */}
-              <div className="space-y-2.5 mt-3">
+              {/* TABELA DE SÉRIES (# | Anterior | kg | reps | ✓) */}
+              <div className="space-y-1.5">
+                {/* Cabeçalho da Tabela */}
+                <div className="grid grid-cols-[28px_1fr_68px_60px_44px] items-center gap-2 px-2.5 py-1 text-[9px] font-black uppercase tracking-wider text-[var(--text-faint)] border-b border-[var(--border)]">
+                  <span className="text-center">#</span>
+                  <span>Anterior</span>
+                  <span className="text-center">Carga</span>
+                  <span className="text-center">Reps</span>
+                  <span className="text-center">✓</span>
+                </div>
+
+                {/* Linhas das Séries */}
                 {exercise.series.map((serie, sIndex) => {
                   const targetConfig = phaseConfig[sIndex] || phaseConfig[phaseConfig.length - 1];
-                  const current1RM = calculate1RM(serie.weight, serie.reps);
+                  const prevLog = getPreviousSerieLog(exercise.exerciseId, serie.serieNumber);
                   const isOutOfRange = isRepsOutOfRange(serie.reps, targetConfig.minReps, targetConfig.maxReps);
                   const prResult = checkPersonalRecord(exercise.exerciseId, serie.weight, serie.reps, history);
 
-                  // Estado recolhido se a série já estiver concluída e NÃO for a explicitamente selecionada
-                  const isCollapsed = serie.completed && expandedSerieId !== serie.id;
-
-                  if (isCollapsed) {
-                    return (
-                      <div
-                        key={`${serie.id}-${sIndex}`}
-                        onClick={() =>
-                          setExpandedSeriesMap((prev) => ({
-                            ...prev,
-                            [exercise.id]: serie.id,
-                          }))
-                        }
-                        className="flex items-center justify-between p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 cursor-pointer hover:bg-emerald-500/15 transition-all text-xs"
-                      >
-                        <div className="flex items-center gap-2 font-bold text-[var(--text-primary)]">
-                          <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                          <span>Série {serie.serieNumber}</span>
-                          <span className="text-[var(--text-muted)] font-normal font-mono tabular-nums">
-                            {serie.weight}kg × {serie.reps} reps
-                          </span>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          {prResult.isPR && (
-                            <span className="text-[10px] font-black px-1.5 py-0.2 rounded-md bg-amber-500/20 text-amber-500 border border-amber-500/40">
-                              PR 🏆
-                            </span>
-                          )}
-                          <span className="text-[10px] text-[var(--text-muted)]">Toque para editar</span>
-                        </div>
-                      </div>
-                    );
-                  }
-
                   return (
                     <div
-                      key={`${serie.id}-${sIndex}`}
-                      className={`p-3.5 rounded-2xl border transition-all ${
+                      key={serie.id}
+                      className={`grid grid-cols-[28px_1fr_68px_60px_44px] items-center gap-2 px-2.5 py-2 rounded-xl transition-all border min-h-[52px] ${
                         serie.completed
-                          ? 'bg-emerald-500/10 border-emerald-500/40'
-                          : 'bg-[var(--surface-subtle)]/80 border-[var(--border)]'
+                          ? 'bg-emerald-500/10 border-emerald-500/30'
+                          : 'bg-[var(--surface-subtle)]/70 border-[var(--border)] hover:border-[var(--brand-primary)]/30'
                       }`}
                     >
-                      {/* Linha de Cabeçalho da Série */}
-                      <div className="flex items-center justify-between pb-2.5 mb-2.5 border-b border-[var(--border)]">
-                        <div className="flex items-center gap-2">
-                          <span
-                            className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-black ${
-                              serie.completed ? 'bg-emerald-600 text-white' : 'bg-[var(--brand-primary)] text-white'
-                            }`}
-                          >
-                            {serie.serieNumber}
+                      {/* # Série */}
+                      <span className="text-xs font-black text-center tabular-nums text-[var(--text-muted)]">
+                        {serie.serieNumber}
+                      </span>
+
+                      {/* Anterior */}
+                      <div className="truncate text-xs tabular-nums">
+                        {prevLog && prevLog.weight > 0 ? (
+                          <span className="font-semibold text-[var(--text-primary)] font-mono">
+                            {prevLog.weight}kg × {prevLog.reps}
                           </span>
-                          <span className="text-xs font-bold text-[var(--text-primary)] whitespace-nowrap">
-                            Meta: {targetConfig.targetReps} reps
+                        ) : (
+                          <span className="text-[var(--text-faint)] font-mono">—</span>
+                        )}
+                        {prResult.isPR && (
+                          <span className="text-[8px] font-black ml-1 px-1 py-0.2 rounded bg-amber-500/20 text-amber-500">
+                            PR
                           </span>
-
-                          {isOutOfRange && (
-                            <span
-                              title="Repetições fora da meta da fase"
-                              className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-500/15 text-amber-500 border border-amber-500/30"
-                            >
-                              <AlertCircle className="w-3 h-3" /> Fora da faixa
-                            </span>
-                          )}
-
-                          {prResult.isPR && (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded-md bg-gradient-to-r from-amber-500 to-yellow-400 text-black shadow-xs animate-pulse">
-                              <Trophy className="w-3 h-3" /> {prResult.label || 'PR'}
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="flex items-center gap-1 text-[11px] text-[var(--brand-primary)] font-bold whitespace-nowrap font-mono tabular-nums">
-                          <TrendingUp className="w-3.5 h-3.5" />
-                          <span>1RM: ~{current1RM}kg</span>
-                        </div>
+                        )}
                       </div>
 
-                      {/* CONTROLES DE CARGA E REPS EM DUAS LINHAS EMPILHADAS */}
-                      <div className="space-y-2.5">
-                        {/* Linha 1: Stepper de Peso com Botões 48x48px + Toque no número para digitar */}
-                        <div className="space-y-1.5">
-                          <div className="flex items-center justify-between bg-[var(--surface)] p-1 rounded-2xl border border-[var(--border)]">
-                            <button
-                              type="button"
-                              onClick={() => updateSerieWeight(exercise.id, serie.id, -1)}
-                              className="min-w-[48px] min-h-[48px] text-xl font-black text-[var(--text-muted)] hover:text-[var(--text-primary)] rounded-xl hover:bg-[var(--surface-subtle)] active:scale-95 flex items-center justify-center select-none"
-                            >
-                              −
-                            </button>
+                      {/* Botão Carga (kg) */}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setStepperState({
+                            isOpen: true,
+                            exerciseId: exercise.id,
+                            exerciseName: exercise.name,
+                            serieId: serie.id,
+                            serieNumber: serie.serieNumber,
+                            initialWeight: serie.weight,
+                            initialReps: serie.reps,
+                            targetRepsText: targetConfig?.targetReps,
+                            initialMode: 'weight',
+                          })
+                        }
+                        className="h-9 px-1 rounded-xl bg-[var(--surface)] border border-[var(--border)] text-xs font-black font-mono tabular-nums text-[var(--text-primary)] hover:border-[var(--brand-primary)] active:scale-95 transition-all flex items-center justify-center shadow-xs"
+                      >
+                        {serie.weight > 0 ? `${serie.weight}kg` : '—'}
+                      </button>
 
-                            <div
-                              onClick={() => promptDirectWeight(exercise.id, serie.id, serie.weight)}
-                              title="Toque para digitar o peso"
-                              className="text-center px-3 py-1 cursor-pointer hover:bg-[var(--surface-subtle)] rounded-xl transition-colors"
-                            >
-                              <span className="text-xl font-black tabular-nums font-mono text-[var(--brand-primary)] block leading-tight">
-                                {serie.weight}
-                              </span>
-                              <span className="text-[10px] text-[var(--text-faint)] font-bold -mt-0.5 block">
-                                kg (toque p/ digitar)
-                              </span>
-                            </div>
+                      {/* Botão Reps */}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setStepperState({
+                            isOpen: true,
+                            exerciseId: exercise.id,
+                            exerciseName: exercise.name,
+                            serieId: serie.id,
+                            serieNumber: serie.serieNumber,
+                            initialWeight: serie.weight,
+                            initialReps: serie.reps,
+                            targetRepsText: targetConfig?.targetReps,
+                            initialMode: 'reps',
+                          })
+                        }
+                        className={`h-9 px-1 rounded-xl border text-xs font-black font-mono tabular-nums active:scale-95 transition-all flex items-center justify-center shadow-xs ${
+                          isOutOfRange
+                            ? 'bg-amber-500/10 border-amber-500/40 text-amber-500'
+                            : 'bg-[var(--surface)] border-[var(--border)] text-[var(--text-primary)] hover:border-[var(--brand-primary)]'
+                        }`}
+                      >
+                        {serie.reps}
+                      </button>
 
-                            <button
-                              type="button"
-                              onClick={() => updateSerieWeight(exercise.id, serie.id, 1)}
-                              className="min-w-[48px] min-h-[48px] text-xl font-black text-[var(--text-muted)] hover:text-[var(--text-primary)] rounded-xl hover:bg-[var(--surface-subtle)] active:scale-95 flex items-center justify-center select-none"
-                            >
-                              +
-                            </button>
-                          </div>
-
-                          {/* Chips rápidos de ajuste de carga ±1 e ±2,5kg */}
-                          <div className="grid grid-cols-4 gap-1">
-                            <button
-                              type="button"
-                              onClick={() => updateSerieWeight(exercise.id, serie.id, -2.5)}
-                              className="py-1 text-[10px] font-bold text-[var(--text-muted)] hover:text-[var(--text-primary)] bg-[var(--surface)] border border-[var(--border)] rounded-lg active:scale-95 text-center"
-                            >
-                              -2.5kg
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => updateSerieWeight(exercise.id, serie.id, -1)}
-                              className="py-1 text-[10px] font-bold text-[var(--text-muted)] hover:text-[var(--text-primary)] bg-[var(--surface)] border border-[var(--border)] rounded-lg active:scale-95 text-center"
-                            >
-                              -1kg
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => updateSerieWeight(exercise.id, serie.id, 1)}
-                              className="py-1 text-[10px] font-bold text-[var(--text-muted)] hover:text-[var(--text-primary)] bg-[var(--surface)] border border-[var(--border)] rounded-lg active:scale-95 text-center"
-                            >
-                              +1kg
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => updateSerieWeight(exercise.id, serie.id, 2.5)}
-                              className="py-1 text-[10px] font-bold text-[var(--text-muted)] hover:text-[var(--text-primary)] bg-[var(--surface)] border border-[var(--border)] rounded-lg active:scale-95 text-center"
-                            >
-                              +2.5kg
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Linha 2: Stepper de Repetições (Área 48x48px com espaçamento amplo) */}
-                        <div className="flex items-center justify-between bg-[var(--surface)] p-1 rounded-2xl border border-[var(--border)]">
-                          <button
-                            type="button"
-                            onClick={() => updateSerieReps(exercise.id, serie.id, -1)}
-                            className="min-w-[48px] min-h-[48px] text-xl font-black text-[var(--text-muted)] hover:text-[var(--text-primary)] rounded-xl hover:bg-[var(--surface-subtle)] active:scale-95 flex items-center justify-center select-none"
-                          >
-                            −
-                          </button>
-
-                          <div
-                            onClick={() => promptDirectReps(exercise.id, serie.id, serie.reps)}
-                            title="Toque para digitar as reps"
-                            className="text-center px-3 py-1 cursor-pointer hover:bg-[var(--surface-subtle)] rounded-xl transition-colors"
-                          >
-                            <span className="text-xl font-black tabular-nums font-mono text-[var(--text-primary)] block leading-tight">
-                              {serie.reps}
-                            </span>
-                            <span className="text-[10px] text-[var(--text-faint)] font-bold -mt-0.5 block">
-                              reps (toque p/ digitar)
-                            </span>
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={() => updateSerieReps(exercise.id, serie.id, 1)}
-                            className="min-w-[48px] min-h-[48px] text-xl font-black text-[var(--text-muted)] hover:text-[var(--text-primary)] rounded-xl hover:bg-[var(--surface-subtle)] active:scale-95 flex items-center justify-center select-none"
-                          >
-                            +
-                          </button>
-                        </div>
-
-                        {/* Botão Largo Concluir Série */}
-                        <button
-                          type="button"
-                          onClick={() => completeSerie(exercise, serie)}
-                          className={
-                            serie.completed
-                              ? 'btn-success-tactile w-full min-h-[46px] text-xs font-bold'
-                              : 'btn-tactile w-full min-h-[46px] text-xs font-bold'
-                          }
-                        >
-                          {serie.completed ? (
-                            <span className="flex items-center justify-center gap-1.5 font-bold">
-                              <Check className="w-4 h-4 stroke-[3]" /> Série Concluída ✓
-                            </span>
-                          ) : (
-                            <span className="flex items-center justify-center gap-1.5 font-bold">
-                              <CheckCircle2 className="w-4 h-4" /> Concluir Série
-                            </span>
-                          )}
-                        </button>
-                      </div>
+                      {/* Botão Checkmark ✓ */}
+                      <button
+                        type="button"
+                        onClick={() => toggleCompleteSerie(exercise, serie)}
+                        className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all active:scale-90 shadow-xs ${
+                          serie.completed
+                            ? 'bg-emerald-600 text-white'
+                            : 'bg-[var(--surface)] border border-[var(--border)] text-[var(--text-faint)] hover:border-emerald-500/60 hover:text-emerald-500'
+                        }`}
+                        title={serie.completed ? 'Desmarcar série' : 'Concluir série e iniciar descanso'}
+                      >
+                        <Check className={`w-4 h-4 ${serie.completed ? 'stroke-[3]' : 'stroke-[2]'}`} />
+                      </button>
                     </div>
                   );
                 })}
@@ -925,49 +812,47 @@ export function TreinoTab() {
           );
         })}
 
-        {/* Estado Vazio se o Treino não tiver Exercícios */}
-        {activeFicha.exercises.length === 0 && (
-          <div className="interactive-card p-8 text-center">
-            <div className="w-14 h-14 rounded-3xl bg-[var(--surface-subtle)] mx-auto flex items-center justify-center text-[var(--brand-primary)] mb-3">
-              <Dumbbell className="w-7 h-7" />
-            </div>
-            <h3 className="text-base font-bold text-[var(--text-primary)]">Este treino está sem exercícios</h3>
-            <p className="text-xs text-[var(--text-muted)] mt-1 max-w-xs mx-auto">
-              Adicione exercícios do catálogo ou crie um exercício personalizado agora mesmo.
-            </p>
-            <button
-              onClick={() => setIsAddExModalOpen(true)}
-              className="btn-tactile mt-4 py-2.5 px-4 text-xs font-bold"
-            >
-              + Adicionar Exercício
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* 4. AÇÕES DA FICHA (BOTÕES TÁTEIS) */}
-      <div className="space-y-2.5 pt-2">
+        {/* Adicionar Exercício */}
         <button
           onClick={() => setIsAddExModalOpen(true)}
-          className="btn-tactile w-full py-3.5 flex items-center justify-center gap-2 font-bold text-sm min-h-[48px]"
+          className="btn-secondary-tactile w-full py-3 flex items-center justify-center gap-1.5 text-xs font-bold min-h-[44px]"
         >
-          <Plus className="w-4 h-4" />
-          Adicionar Exercício ao Treino
-        </button>
-
-        <button
-          onClick={() => {
-            setTimerDuration(90);
-            setIsTimerOpen(true);
-          }}
-          className="btn-secondary-tactile w-full py-3 flex items-center justify-center gap-2 text-xs font-bold min-h-[48px]"
-        >
-          <Clock className="w-4 h-4 text-[var(--brand-primary)]" />
-          Abrir Cronômetro de Descanso
+          <Plus className="w-4 h-4 text-[var(--brand-primary)]" />
+          <span>Adicionar Exercício ao Treino</span>
         </button>
       </div>
 
-      {/* MODAL ADICIONAR EXERCÍCIO */}
+      {/* 4. BOTÃO FLUTUANTE FINALIZAR TREINO (Aparece só quando houver séries feitas) */}
+      {completedSeriesCount > 0 && (
+        <aside
+          aria-label="Ações de finalização do treino"
+          className="fixed bottom-20 left-1/2 -translate-x-1/2 z-30 max-w-md w-[calc(100%-2rem)] px-2 animate-in slide-in-from-bottom-3 duration-200"
+        >
+          <button
+            type="button"
+            onClick={() => setIsSummaryOpen(true)}
+            className="btn-success-tactile w-full py-3.5 rounded-2xl shadow-xl flex items-center justify-center gap-2 font-black text-sm"
+          >
+            <Trophy className="w-4 h-4" />
+            <span>Finalizar Treino ({completedSeriesCount}/{totalSeriesCount} séries)</span>
+          </button>
+        </aside>
+      )}
+
+      {/* BOTTOM SHEET STEPPER DE CARGA E REPS */}
+      <SerieStepperSheet
+        isOpen={stepperState.isOpen}
+        onClose={() => setStepperState((prev) => ({ ...prev, isOpen: false }))}
+        exerciseName={stepperState.exerciseName}
+        serieNumber={stepperState.serieNumber}
+        initialWeight={stepperState.initialWeight}
+        initialReps={stepperState.initialReps}
+        targetRepsText={stepperState.targetRepsText}
+        initialMode={stepperState.initialMode}
+        onSave={handleSaveStepper}
+      />
+
+      {/* MODAL ADICIONAR EXERCÍCIO RÁPIDO */}
       {isAddExModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-xs p-4 animate-in fade-in">
           <div className="w-full max-w-sm rounded-3xl bg-[var(--surface)] border border-[var(--border)] p-5 shadow-2xl">
@@ -1001,7 +886,7 @@ export function TreinoTab() {
         </div>
       )}
 
-      {/* MODAL EDITOR DE TREINOS (NOVO / EDITAR) */}
+      {/* MODAL EDITOR DE TREINOS */}
       <WorkoutEditorModal
         isOpen={isEditorOpen}
         onClose={() => setIsEditorOpen(false)}
@@ -1031,7 +916,7 @@ export function TreinoTab() {
         onResetCompleted={resetWorkoutCompletion}
       />
 
-      {/* CRONÔMETRO DE DESCANSO */}
+      {/* CRONÔMETRO DE DESCANSO (PÍLULA FLUTUANTE) */}
       <RestTimerModal initialSeconds={timerDuration} isOpen={isTimerOpen} onClose={() => setIsTimerOpen(false)} />
     </div>
   );

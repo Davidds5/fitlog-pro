@@ -19,6 +19,9 @@ import {
   X,
   Sparkles,
   Check,
+  ChevronDown,
+  ChevronUp,
+  AlertCircle,
 } from 'lucide-react';
 
 const DEFAULT_PROFILE: UserProfile = {
@@ -83,6 +86,16 @@ export function DietaTab() {
 
   // Modo de porção: por unidade ou por gramas
   const [portionMode, setPortionMode] = useState<'unit' | 'grams'>('unit');
+
+  // Controle de colapso de refeições
+  const [collapsedMeals, setCollapsedMeals] = useState<Record<string, boolean>>({});
+
+  const toggleMealCollapse = (mealType: string) => {
+    setCollapsedMeals((prev) => ({
+      ...prev,
+      [mealType]: !prev[mealType],
+    }));
+  };
 
   const goals = calculateMacroGoals(profile);
 
@@ -226,16 +239,25 @@ export function DietaTab() {
 
   const searchResults = searchFoods(allFoods, searchQuery, selectedCategory);
   const selectedFoodMacros = calculatePortionMacros(selectedFood, portionGrams);
-  const calPercent = Math.min(100, Math.round((totals.calories / goals.calories) * 100));
+  const calPercent = Math.min(100, Math.round((totals.calories / (goals.calories || 1)) * 100));
+  const remainingCalories = Math.max(0, goals.calories - Math.round(totals.calories));
+
+  // Geometria do Anel de Calorias
+  const ringRadius = 50;
+  const ringCircumference = 2 * Math.PI * ringRadius;
+  const ringOffset = ringCircumference - (calPercent / 100) * ringCircumference;
+
+  const isProfileCustomized =
+    typeof window !== 'undefined' && Boolean(window.localStorage.getItem('fitlog_profile'));
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 max-w-md mx-auto pb-28">
       {/* Topo com Título e Perfil */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-black text-[var(--text-primary)] flex items-center gap-2">
-            <Utensils className="w-5 h-5 text-[var(--brand-primary)]" />
-            Dieta & Macros
+          <h1 className="text-base font-black text-[var(--text-primary)] flex items-center gap-1.5">
+            <Utensils className="w-4 h-4 text-[var(--brand-primary)]" />
+            Dieta & Calorias
           </h1>
           <p className="text-xs text-[var(--text-muted)] mt-0.5">
             Tabela Nutricional Brasileira ({allFoods.length} alimentos).
@@ -243,123 +265,208 @@ export function DietaTab() {
         </div>
         <button
           onClick={() => setIsProfileModalOpen(true)}
-          className="btn-secondary-tactile text-xs py-2 px-3 flex items-center gap-1.5 min-h-[36px]"
+          className="btn-secondary-tactile text-xs py-1.5 px-3 flex items-center gap-1.5 min-h-[36px] font-bold"
         >
           <Settings2 className="w-3.5 h-3.5 text-[var(--brand-primary)]" />
-          Perfil
+          <span>Perfil</span>
         </button>
       </div>
 
-      {/* Card Principal de Calorias e Macros */}
-      <div className="interactive-card p-4 shadow-sm">
-        <div className="flex items-center justify-between mb-2">
-          <div>
-            <span className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-wider block">
-              Calorias Diárias
-            </span>
-            <div className="flex items-baseline gap-1 mt-0.5">
-              <span className="text-2xl font-black tabular-nums text-[var(--text-primary)]">
-                {Math.round(totals.calories)}
+      {/* CTA caso perfil não esteja configurado pelo usuário */}
+      {!isProfileCustomized && (
+        <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-2 text-xs animate-in fade-in">
+          <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 font-bold">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>Configure seu perfil para calcular suas metas reais.</span>
+          </div>
+          <button
+            onClick={() => setIsProfileModalOpen(true)}
+            className="btn-tactile text-[11px] py-1 px-2.5 font-bold shrink-0"
+          >
+            Configurar
+          </button>
+        </div>
+      )}
+
+      {/* ANEL DE CALORIAS GRANDE NO TOPO + 3 BARRAS DE MACROS (V3) */}
+      <div className="interactive-card p-4 shadow-sm space-y-3">
+        <div className="flex items-center gap-4 justify-between">
+          {/* Anel SVG Circular */}
+          <div className="relative w-32 h-32 flex items-center justify-center shrink-0">
+            <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
+              <circle
+                cx="60"
+                cy="60"
+                r={ringRadius}
+                className="stroke-[var(--surface-subtle)]"
+                strokeWidth="10"
+                fill="transparent"
+              />
+              <circle
+                cx="60"
+                cy="60"
+                r={ringRadius}
+                className="stroke-[var(--brand-primary)] transition-all duration-500 ease-out"
+                strokeWidth="10"
+                strokeDasharray={ringCircumference}
+                strokeDashoffset={ringOffset}
+                strokeLinecap="round"
+                fill="transparent"
+              />
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+              <span className="text-2xl font-black font-mono tabular-nums text-[var(--text-primary)] leading-none">
+                {remainingCalories}
               </span>
-              <span className="text-xs font-semibold text-[var(--text-muted)]">/ {goals.calories} kcal</span>
+              <span className="text-[9px] font-black uppercase tracking-wider text-[var(--text-faint)] mt-1">
+                kcal restantes
+              </span>
             </div>
           </div>
 
-          <div className="text-right">
-            <span className="text-sm font-black text-[var(--brand-primary)]">{calPercent}%</span>
-            <span className="text-[10px] text-[var(--text-faint)] block">da meta atingida</span>
+          {/* Resumo e 3 Barras de Macros (Azul, Âmbar, Rosa) */}
+          <div className="flex-1 space-y-2 min-w-0">
+            <div className="flex items-baseline justify-between text-xs pb-1 border-b border-[var(--border)]">
+              <span className="font-bold text-[var(--text-muted)]">Consumido</span>
+              <span className="font-black font-mono tabular-nums text-[var(--text-primary)]">
+                {Math.round(totals.calories)} / {goals.calories} kcal
+              </span>
+            </div>
+
+            {/* Proteína (Azul) */}
+            <div className="space-y-0.5">
+              <div className="flex justify-between text-[11px] font-bold">
+                <span className="text-blue-500">Proteína</span>
+                <span className="text-[var(--text-muted)] font-mono tabular-nums">
+                  {Math.round(totals.protein)}/{goals.protein}g
+                </span>
+              </div>
+              <div className="w-full h-1.5 bg-[var(--surface-subtle)] rounded-full overflow-hidden border border-[var(--border)]">
+                <div
+                  className="h-full bg-blue-500 rounded-full transition-all duration-300"
+                  style={{ width: `${Math.min(100, Math.round((totals.protein / (goals.protein || 1)) * 100))}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Carboidratos (Âmbar) */}
+            <div className="space-y-0.5">
+              <div className="flex justify-between text-[11px] font-bold">
+                <span className="text-amber-500">Carboidratos</span>
+                <span className="text-[var(--text-muted)] font-mono tabular-nums">
+                  {Math.round(totals.carbs)}/{goals.carbs}g
+                </span>
+              </div>
+              <div className="w-full h-1.5 bg-[var(--surface-subtle)] rounded-full overflow-hidden border border-[var(--border)]">
+                <div
+                  className="h-full bg-amber-500 rounded-full transition-all duration-300"
+                  style={{ width: `${Math.min(100, Math.round((totals.carbs / (goals.carbs || 1)) * 100))}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Gorduras (Rosa) */}
+            <div className="space-y-0.5">
+              <div className="flex justify-between text-[11px] font-bold">
+                <span className="text-rose-500">Gorduras</span>
+                <span className="text-[var(--text-muted)] font-mono tabular-nums">
+                  {Math.round(totals.fat)}/{goals.fat}g
+                </span>
+              </div>
+              <div className="w-full h-1.5 bg-[var(--surface-subtle)] rounded-full overflow-hidden border border-[var(--border)]">
+                <div
+                  className="h-full bg-rose-500 rounded-full transition-all duration-300"
+                  style={{ width: `${Math.min(100, Math.round((totals.fat / (goals.fat || 1)) * 100))}%` }}
+                />
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Barra de Calorias */}
-        <div className="w-full h-2.5 bg-[var(--surface-subtle)] rounded-full overflow-hidden mb-4 border border-[var(--border)]">
-          <div
-            className="h-full bg-[var(--brand-primary)] transition-all duration-300 rounded-full"
-            style={{ width: `${calPercent}%` }}
-          />
-        </div>
-
-        {/* Grid dos 3 Macros */}
-        <div className="grid grid-cols-3 gap-2 pt-2 border-t border-[var(--border)]">
-          <div className="bg-[var(--surface-subtle)] border border-[var(--border)] rounded-2xl p-2.5 text-center">
-            <span className="text-[10px] font-black uppercase tracking-wider text-blue-500">Proteína</span>
-            <div className="mt-0.5">
-              <span className="text-sm font-black tabular-nums text-[var(--text-primary)]">
-                {Math.round(totals.protein)}
-              </span>
-              <span className="text-[10px] text-[var(--text-muted)]">/{goals.protein}g</span>
-            </div>
-            <div className="w-full h-1 bg-[var(--border)] rounded-full mt-1.5 overflow-hidden">
-              <div
-                className="h-full bg-blue-500 rounded-full"
-                style={{ width: `${Math.min(100, (totals.protein / goals.protein) * 100)}%` }}
-              />
-            </div>
-          </div>
-
-          <div className="bg-[var(--surface-subtle)] border border-[var(--border)] rounded-2xl p-2.5 text-center">
-            <span className="text-[10px] font-black uppercase tracking-wider text-amber-500">Carbos</span>
-            <div className="mt-0.5">
-              <span className="text-sm font-black tabular-nums text-[var(--text-primary)]">
-                {Math.round(totals.carbs)}
-              </span>
-              <span className="text-[10px] text-[var(--text-muted)]">/{goals.carbs}g</span>
-            </div>
-            <div className="w-full h-1 bg-[var(--border)] rounded-full mt-1.5 overflow-hidden">
-              <div
-                className="h-full bg-amber-500 rounded-full"
-                style={{ width: `${Math.min(100, (totals.carbs / goals.carbs) * 100)}%` }}
-              />
-            </div>
-          </div>
-
-          <div className="bg-[var(--surface-subtle)] border border-[var(--border)] rounded-2xl p-2.5 text-center">
-            <span className="text-[10px] font-black uppercase tracking-wider text-rose-500">Gorduras</span>
-            <div className="mt-0.5">
-              <span className="text-sm font-black tabular-nums text-[var(--text-primary)]">
-                {Math.round(totals.fat)}
-              </span>
-              <span className="text-[10px] text-[var(--text-muted)]">/{goals.fat}g</span>
-            </div>
-            <div className="w-full h-1 bg-[var(--border)] rounded-full mt-1.5 overflow-hidden">
-              <div
-                className="h-full bg-rose-500 rounded-full"
-                style={{ width: `${Math.min(100, (totals.fat / goals.fat) * 100)}%` }}
-              />
-            </div>
-          </div>
+        {/* Meta explicada em 1 linha */}
+        <div className="flex items-center justify-between pt-2 border-t border-[var(--border)] text-[11px] text-[var(--text-faint)]">
+          <span>
+            TMB ~{goals.tmb} kcal + atividade ({profile.activityLevel}) • Meta: {profile.goal}
+          </span>
+          <button
+            type="button"
+            onClick={() => setIsProfileModalOpen(true)}
+            className="text-[var(--brand-primary)] font-bold hover:underline"
+          >
+            Editar perfil
+          </button>
         </div>
       </div>
 
-      {/* Lista de Refeições */}
-      <div className="space-y-3">
+      {/* LISTA DE REFEIÇÕES RECOLHÍVEIS (V3) */}
+      <div className="space-y-2.5">
         {(Object.keys(MEAL_LABELS) as MealType[]).map((mealType) => {
           const mealItems = currentDayLog.meals.filter((m) => m.mealType === mealType);
           const mealCalories = mealItems.reduce((acc, m) => acc + m.calories, 0);
+          const isCollapsed = collapsedMeals[mealType];
 
-          return (
-            <div key={mealType} className="interactive-card p-3.5">
-              <div className="flex items-center justify-between mb-2">
+          // REFEIÇÃO VAZIA: Linha compacta com botão +
+          if (mealItems.length === 0) {
+            return (
+              <div
+                key={mealType}
+                className="interactive-card p-3 shadow-xs flex items-center justify-between border border-[var(--border)]"
+              >
                 <div className="flex items-center gap-2">
                   <h2 className="text-xs font-bold text-[var(--text-primary)]">{MEAL_LABELS[mealType]}</h2>
-                  {mealCalories > 0 && (
-                    <span className="text-[10px] bg-[var(--surface-subtle)] border border-[var(--border)] px-1.5 py-0.5 rounded-md text-[var(--brand-primary)] font-bold tabular-nums">
-                      {Math.round(mealCalories)} kcal
-                    </span>
-                  )}
+                  <span className="text-[10px] text-[var(--text-faint)] italic">Vazia</span>
                 </div>
                 <button
+                  type="button"
                   onClick={() => handleOpenAddModal(mealType)}
-                  className="btn-secondary-tactile text-[11px] py-1 px-2.5 flex items-center gap-1 min-h-[30px]"
+                  className="btn-secondary-tactile text-[11px] py-1 px-2.5 min-h-[32px] flex items-center gap-1 font-bold text-[var(--brand-primary)]"
                 >
-                  <Plus className="w-3 h-3 text-[var(--brand-primary)]" />
-                  Alimento
+                  <Plus className="w-3.5 h-3.5" /> Alimento
                 </button>
               </div>
+            );
+          }
 
-              {/* Itens da Refeição */}
-              {mealItems.length > 0 ? (
-                <div className="space-y-1.5 mt-2">
+          // REFEIÇÃO COM ALIMENTOS: Recolhível
+          return (
+            <div key={mealType} className="interactive-card p-3.5 shadow-sm space-y-2">
+              <div className="flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => toggleMealCollapse(mealType)}
+                  className="flex items-center gap-2 text-left truncate flex-1"
+                >
+                  <h2 className="text-xs font-bold text-[var(--text-primary)]">{MEAL_LABELS[mealType]}</h2>
+                  <span className="text-[10px] bg-[var(--surface-subtle)] border border-[var(--border)] px-1.5 py-0.5 rounded-md text-[var(--brand-primary)] font-bold tabular-nums">
+                    {Math.round(mealCalories)} kcal
+                  </span>
+                  <span className="text-[10px] text-[var(--text-faint)]">
+                    ({mealItems.length} {mealItems.length > 1 ? 'itens' : 'item'})
+                  </span>
+                </button>
+
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => handleOpenAddModal(mealType)}
+                    className="btn-secondary-tactile text-[11px] py-1 px-2.5 flex items-center gap-1 min-h-[30px] font-bold text-[var(--brand-primary)]"
+                  >
+                    <Plus className="w-3 h-3" />
+                    Alimento
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => toggleMealCollapse(mealType)}
+                    className="p-1 text-[var(--text-muted)] hover:text-[var(--text-primary)] rounded-lg"
+                  >
+                    {isCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Itens da Refeição (se não recolhido) */}
+              {!isCollapsed && (
+                <div className="space-y-1.5 pt-1 border-t border-[var(--border)]">
                   {mealItems.map((item) => (
                     <div
                       key={item.id}
@@ -389,13 +496,26 @@ export function DietaTab() {
                     </div>
                   ))}
                 </div>
-              ) : (
-                <p className="text-[11px] text-[var(--text-faint)] italic mt-1">Nenhum alimento registrado ainda.</p>
               )}
             </div>
           );
         })}
       </div>
+
+      {/* BOTÃO FLUTUANTE ADICIONAR ALIMENTO (V3) */}
+      <aside
+        aria-label="Ação rápida de adicionar alimento"
+        className="fixed bottom-20 left-1/2 -translate-x-1/2 z-30 max-w-md w-[calc(100%-2rem)] px-2 animate-in slide-in-from-bottom-2 duration-150"
+      >
+        <button
+          type="button"
+          onClick={() => handleOpenAddModal('almoco')}
+          className="btn-tactile w-full py-3.5 rounded-2xl shadow-xl flex items-center justify-center gap-2 font-black text-sm"
+        >
+          <Plus className="w-4 h-4" />
+          <span>+ Adicionar Alimento (Busca TACO)</span>
+        </button>
+      </aside>
 
       {/* Modal Adicionar Alimento */}
       {isAddFoodModalOpen && (
