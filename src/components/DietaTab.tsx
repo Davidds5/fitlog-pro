@@ -505,7 +505,7 @@ export function DietaTab() {
       {/* BOTÃO FLUTUANTE ADICIONAR ALIMENTO (V3) */}
       <aside
         aria-label="Ação rápida de adicionar alimento"
-        className="fixed bottom-20 left-1/2 -translate-x-1/2 z-30 max-w-md w-[calc(100%-2rem)] px-2 animate-in slide-in-from-bottom-2 duration-150"
+        className="fixed bottom-24 left-1/2 -translate-x-1/2 z-30 max-w-md w-[calc(100%-2rem)] px-2 animate-in slide-in-from-bottom-2 duration-150"
       >
         <button
           type="button"
@@ -513,7 +513,7 @@ export function DietaTab() {
           className="btn-tactile w-full py-3.5 rounded-2xl shadow-xl flex items-center justify-center gap-2 font-black text-sm"
         >
           <Plus className="w-4 h-4" />
-          <span>+ Adicionar Alimento (Busca TACO)</span>
+          <span>Adicionar Alimento (Busca TACO)</span>
         </button>
       </aside>
 
@@ -1023,39 +1023,88 @@ export function DietaTab() {
       {isProfileModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-xs p-4 animate-in fade-in">
           <div className="w-full max-w-sm rounded-3xl bg-[var(--surface)] border border-[var(--border)] p-5 shadow-2xl">
-            <h3 className="text-base font-bold text-[var(--text-primary)] mb-3">Configurar Perfil & Metas</h3>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-base font-bold text-[var(--text-primary)]">Configurar Perfil & Metas</h3>
+              <button
+                type="button"
+                onClick={() => setIsProfileModalOpen(false)}
+                className="p-1 rounded-full text-[var(--text-muted)] hover:text-[var(--text-primary)] bg-[var(--surface-subtle)]"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
 
-            <div className="space-y-3 mb-4 text-xs">
-              <div>
-                <label className="text-[var(--text-muted)] block mb-1 font-semibold">Peso Atual (kg):</label>
-                <input
-                  type="number"
-                  value={profile.weight}
-                  onChange={(e) => setProfile((p) => ({ ...p, weight: Number(e.target.value) }))}
-                  className="w-full p-2.5 rounded-xl bg-[var(--surface-subtle)] border border-[var(--border)] text-[var(--text-primary)] font-bold"
-                />
+            <div className="space-y-2.5 mb-4 text-xs">
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[var(--text-muted)] block mb-1 font-semibold">Peso (kg):</label>
+                  <input
+                    type="number"
+                    value={profile.weight}
+                    onChange={(e) => setProfile((p) => ({ ...p, weight: Number(e.target.value) }))}
+                    className="w-full p-2.5 rounded-xl bg-[var(--surface-subtle)] border border-[var(--border)] text-[var(--text-primary)] font-bold"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[var(--text-muted)] block mb-1 font-semibold">Altura (cm):</label>
+                  <input
+                    type="number"
+                    value={profile.height}
+                    onChange={(e) => setProfile((p) => ({ ...p, height: Number(e.target.value) }))}
+                    className="w-full p-2.5 rounded-xl bg-[var(--surface-subtle)] border border-[var(--border)] text-[var(--text-primary)] font-bold"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[var(--text-muted)] block mb-1 font-semibold">Idade (anos):</label>
+                  <input
+                    type="number"
+                    value={profile.age || 26}
+                    onChange={(e) => setProfile((p) => ({ ...p, age: Number(e.target.value) }))}
+                    className="w-full p-2.5 rounded-xl bg-[var(--surface-subtle)] border border-[var(--border)] text-[var(--text-primary)] font-bold"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[var(--text-muted)] block mb-1 font-semibold">Sexo Biológico:</label>
+                  <select
+                    value={profile.gender || 'masculino'}
+                    onChange={(e) => setProfile((p) => ({ ...p, gender: e.target.value as any }))}
+                    className="w-full p-2.5 rounded-xl bg-[var(--surface-subtle)] border border-[var(--border)] text-[var(--text-primary)] font-bold"
+                  >
+                    <option value="masculino">Masculino</option>
+                    <option value="feminino">Feminino</option>
+                  </select>
+                </div>
               </div>
 
               <div>
-                <label className="text-[var(--text-muted)] block mb-1 font-semibold">Altura (cm):</label>
-                <input
-                  type="number"
-                  value={profile.height}
-                  onChange={(e) => setProfile((p) => ({ ...p, height: Number(e.target.value) }))}
+                <label className="text-[var(--text-muted)] block mb-1 font-semibold">Rotina / Nível de Atividade:</label>
+                <select
+                  value={profile.activityLevel || 'leve'}
+                  onChange={(e) => setProfile((p) => ({ ...p, activityLevel: e.target.value as any }))}
                   className="w-full p-2.5 rounded-xl bg-[var(--surface-subtle)] border border-[var(--border)] text-[var(--text-primary)] font-bold"
-                />
+                >
+                  <option value="sedentario">Sedentário (pouco movimento, trabalho sentado)</option>
+                  <option value="leve">Leve (treino musculação + trabalho normal - Recomendado)</option>
+                  <option value="moderado">Moderado (treino diário intenso 4-5x)</option>
+                  <option value="ativo">Muito Ativo (treino pesado + trabalho braçal)</option>
+                </select>
               </div>
 
               <div>
-                <label className="text-[var(--text-muted)] block mb-1 font-semibold">Objetivo:</label>
+                <label className="text-[var(--text-muted)] block mb-1 font-semibold">Objetivo Principal:</label>
                 <select
                   value={profile.goal}
                   onChange={(e) => setProfile((p) => ({ ...p, goal: e.target.value as any }))}
                   className="w-full p-2.5 rounded-xl bg-[var(--surface-subtle)] border border-[var(--border)] text-[var(--text-primary)] font-bold"
                 >
                   <option value="ganhar">Hipertrofia (+350 kcal)</option>
-                  <option value="manter">Manutenção de Peso</option>
-                  <option value="perder">Definição (-400 kcal)</option>
+                  <option value="manter">Manutenção de Peso (0 kcal)</option>
+                  <option value="perder">Definição / Secar (-400 kcal)</option>
                 </select>
               </div>
             </div>

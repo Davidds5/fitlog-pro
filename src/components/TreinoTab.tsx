@@ -997,7 +997,7 @@ export function TreinoTab() {
       {completedSeriesCount > 0 && (
         <aside
           aria-label="Ações de finalização do treino"
-          className="fixed bottom-20 left-1/2 -translate-x-1/2 z-30 max-w-md w-[calc(100%-2rem)] px-2 animate-in slide-in-from-bottom-3 duration-200"
+          className="fixed bottom-24 left-1/2 -translate-x-1/2 z-30 max-w-md w-[calc(100%-2rem)] px-2 animate-in slide-in-from-bottom-3 duration-200"
         >
           <button
             type="button"
